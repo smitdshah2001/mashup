@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Running Mashup DJ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .screen { display: none; padding: 20px; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* AUTH SCREEN */
+  #authScreen {
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+  }
+  .logo { font-size: 48px; margin-bottom: 12px; }
+  .app-title { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #1db954, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .app-sub { color: #888; font-size: 13px; margin-top: 6px; margin-bottom: 40px; }
+  .spotify-btn {
+    background: #1db954;
+    color: #000;
+    border: none;
+    padding: 16px 36px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .spotify-btn:hover { background: #1ed760; transform: scale(1.04); }
+  .note { color: #555; font-size: 11px; margin-top: 16px; text-align: center; max-width: 280px; }
+
+  /* LIBRARY SCREEN */
+  #libraryScreen { background: #0a0a0a; }
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .top-bar-title { font-size: 20px; font-weight: 800; }
+  .play-all-btn {
+    background: #1db954;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .play-all-btn:hover { transform: scale(1.05); }
+  .play-all-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .add-song-box {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .add-song-box h3 { font-size: 13px; color: #888; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+  .input-row { display: flex; gap: 8px; }
+  .song-input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .song-input:focus { border-color: #1db954; }
+  .add-btn {
+    background: #1db954;
+    color: #000;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .song-list { flex: 1; overflow-y: auto; }
+  .song-card {
+    background: #111;
+    border: 1px solid #1a1a1a;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.2s;
+  }
+  .song-card.analyzing { border-color: #1db954; animation: pulse 1.5s infinite; }
+  .song-card.ready { border-color: #1db954; }
+  .song-card.error { border-color: #ff4444; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .song-art {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: #222;
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+  .song-art-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1db954, #00d4ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .song-info { flex: 1; min-width: 0; }
+  .song-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-artist { font-size: 12px; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-segments { font-size: 11px; color: #1db954; margin-top: 4px; }
+  .song-status { font-size: 11px; color: #888; margin-top: 4px; }
+  .remove-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #888;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .remove-btn:hover { border-color: #ff4444; color: #ff4444; }
+  .empty-state { text-align: center; padding: 40px 20px; color: #444; }
+  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+
+  /* DJ SCREEN */
+  #djScreen {
+    background: linear-gradient(180deg, #0d1f0d 0%, #0a0a0a 100%);
+    align-items: center;
+  }
+  .dj-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .back-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .dj-status-badge {
+    background: #1db954;
+    color: #000;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .now-playing-art {
+    width: 200px;
+    height: 200px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1db954, #00d4ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    margin-bottom: 24px;
+    box-shadow: 0 0 60px rgba(29,185,84,0.3);
+    overflow: hidden;
+  }
+  .now-playing-art img { width: 100%; height: 100%; object-fit: cover; }
+  .now-playing-label { font-size: 11px; color: #1db954; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .now-playing-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+  .now-playing-artist { font-size: 14px; color: #888; text-align: center; margin-bottom: 6px; }
+  .now-playing-section { font-size: 12px; color: #1db954; text-align: center; margin-bottom: 24px; }
+  .progress-wrap { width: 100%; max-width: 340px; margin-bottom: 24px; }
+  .progress-bar-bg {
+    width: 100%;
+    height: 4px;
+    background: #222;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1db954, #00d4ff);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 1s linear;
+  }
+  .progress-times { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #555; }
+  .dj-controls { display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
+  .ctrl-btn {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover { background: #222; border-color: #555; }
+  .ctrl-btn.primary {
+    background: #1db954;
+    border-color: #1db954;
+    color: #000;
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+  .ctrl-btn.primary:hover { background: #1ed760; }
+  .queue-panel {
+    width: 100%;
+    max-width: 400px;
+    background: #111;
+    border: 1px solid #1a1a1a;
+    border-radius: 16px;
+    padding: 14px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .queue-title { font-size: 11px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 13px;
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-item.active { color: #1db954; font-weight: 600; }
+  .queue-num { color: #444; font-size: 11px; width: 18px; text-align: center; flex-shrink: 0; }
+  .queue-seg-info { font-size: 11px; color: #555; margin-left: auto; flex-shrink: 0; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #222;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    z-index: 999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+    border: 1px solid #333;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* LOADER */
+  .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #1db954; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .analyzing-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 30px;
+  }
+  .analyzing-overlay h2 { font-size: 20px; margin-bottom: 10px; }
+  .analyzing-overlay p { color: #888; font-size: 14px; text-align: center; margin-bottom: 24px; }
+  .analyzing-log {
+    background: #111; border: 1px solid #222; border-radius: 12px;
+    padding: 14px; width: 100%; max-width: 360px; max-height: 200px; overflow-y: auto;
+    font-size: 12px; color: #888; font-family: monospace;
+  }
+  .analyzing-log .log-line { margin-bottom: 4px; }
+  .analyzing-log .log-line.ok { color: #1db954; }
+  .analyzing-log .log-line.info { color: #00d4ff; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen" class="screen active">
+  <div class="logo">🎧</div>
+  <div class="app-title">Running Mashup DJ</div>
+  <div class="app-sub">AI-powered high-energy running mix</div>
+  <button class="spotify-btn" onclick="loginSpotify()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+    Connect with Spotify
+  </button>
+  <div class="note">Requires Spotify Premium for playback control</div>
+</div>
+
+<!-- LIBRARY SCREEN -->
+<div id="libraryScreen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-title">🎵 My Library</div>
+    <button class="play-all-btn" id="playAllBtn" onclick="startMashup()" disabled>▶ Run Mashup</button>
+  </div>
+  <div class="add-song-box">
+    <h3>Add Song</h3>
+    <div class="input-row">
+      <input class="song-input" id="songInput" placeholder="Song name + artist..." onkeydown="if(event.key==='Enter')addSong()" />
+      <button class="add-btn" id="addBtn" onclick="addSong()">Add</button>
+    </div>
+  </div>
+  <div class="song-list" id="songList">
+    <div class="empty-state" id="emptyState">
+      <div class="emoji">🎶</div>
+      <div>Add songs to get started</div>
+    </div>
+  </div>
+</div>
+
+<!-- DJ SCREEN -->
+<div id="djScreen" class="screen">
+  <div class="dj-header" style="width:100%;max-width:400px;">
+    <button class="back-btn" onclick="stopAndGoBack()">← Library</button>
+    <div class="dj-status-badge" id="djBadge">LIVE</div>
+  </div>
+  <div class="now-playing-art" id="npArt">🎵</div>
+  <div class="now-playing-label">Now Playing</div>
+  <div class="now-playing-title" id="npTitle">—</div>
+  <div class="now-playing-artist" id="npArtist">—</div>
+  <div class="now-playing-section" id="npSection">—</div>
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-times"><span id="progCurrent">0:00</span><span id="progEnd">0:00</span></div>
+  </div>
+  <div class="dj-controls">
+    <button class="ctrl-btn" onclick="prevSegment()" title="Previous">⏮</button>
+    <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlayPause()">⏸</button>
+    <button class="ctrl-btn" onclick="nextSegment()" title="Next Segment">⏭</button>
+  </div>
+  <div class="queue-panel" id="queuePanel"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
+const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
+const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
+
+let accessToken = null;
+let songs = [];
+let mashupQueue = [];
+let currentQueueIdx = 0;
+let isPlaying = false;
+let progressInterval = null;
+let segmentStartTime = null;
+let segmentDuration = null;
+let isPaused = false;
+let pausedAt = null;
+
+// ── STORAGE ──
+async function saveSongs() {
+  try { await window.storage.set('running-mashup-songs', JSON.stringify(songs)); } catch(e){}
+}
+async function loadSongs() {
+  try {
+    const r = await window.storage.get('running-mashup-songs');
+    if (r) songs = JSON.parse(r.value);
+  } catch(e){ songs = []; }
+}
+
+// ── AUTH ──
+function loginSpotify() {
+  const verifier = generateCodeVerifier(128);
+  sessionStorage.setItem('pkce_verifier', verifier);
+  generateCodeChallenge(verifier).then(challenge => {
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      response_type: 'code',
+      redirect_uri: REDIRECT_URI,
+      scope: SCOPES,
+      code_challenge_method: 'S256',
+      code_challenge: challenge,
+    });
+    window.location.href = 'https://accounts.spotify.com/authorize?' + params;
+  });
+}
+
+function generateCodeVerifier(len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  let result = '';
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  arr.forEach(b => result += chars[b % chars.length]);
+  return result;
+}
+
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function handleCallback(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const body = new URLSearchParams({
+    client_id: CLIENT_ID,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: REDIRECT_URI,
+    code_verifier: verifier,
+  });
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    accessToken = data.access_token;
+    sessionStorage.setItem('spotify_token', accessToken);
+    window.history.replaceState({}, '', window.location.pathname);
+    await initLibrary();
+  } else {
+    showToast('Auth failed. Please try again.');
+  }
+}
+
+// ── INIT ──
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) {
+    showScreen('authScreen');
+    await handleCallback(code);
+    return;
+  }
+  const saved = sessionStorage.getItem('spotify_token');
+  if (saved) {
+    accessToken = saved;
+    await initLibrary();
+  } else {
+    showScreen('authScreen');
+  }
+}
+
+async function initLibrary() {
+  await loadSongs();
+  renderLibrary();
+  showScreen('libraryScreen');
+}
+
+// ── SCREENS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── LIBRARY ──
+function renderLibrary() {
+  const list = document.getElementById('songList');
+  const empty = document.getElementById('emptyState');
+  const playBtn = document.getElementById('playAllBtn');
+
+  if (songs.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(empty);
+    empty.style.display = 'block';
+    playBtn.disabled = true;
+    return;
+  }
+  empty.style.display = 'none';
+  const readyCount = songs.filter(s => s.segments && s.spotifyId).length;
+  playBtn.disabled = readyCount === 0;
+
+  list.innerHTML = songs.map((s, i) => `
+    <div class="song-card ${s.status || ''}" id="card-${i}">
+      ${s.artUrl ? `<img class="song-art" src="${s.artUrl}" />` : `<div class="song-art-placeholder">🎵</div>`}
+      <div class="song-info">
+        <div class="song-name">${s.spotifyName || s.query}</div>
+        ${s.spotifyArtist ? `<div class="song-artist">${s.spotifyArtist}</div>` : ''}
+        ${s.segments ? `<div class="song-segments">✓ ${s.segments.length} high-energy segments mapped</div>` :
+          s.status === 'analyzing' ? `<div class="song-status"><span class="loader"></span> Analyzing...</div>` :
+          s.status === 'error' ? `<div class="song-status" style="color:#ff4444">⚠ ${s.errorMsg || 'Error'}</div>` :
+          `<div class="song-status">Queued...</div>`}
+      </div>
+      <button class="remove-btn" onclick="removeSong(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+async function addSong() {
+  const input = document.getElementById('songInput');
+  const query = input.value.trim();
+  if (!query) return;
+  input.value = '';
+  document.getElementById('addBtn').disabled = true;
+
+  const song = { query, status: 'searching', spotifyId: null, segments: null };
+  songs.push(song);
+  saveSongs();
+  renderLibrary();
+
+  try {
+    // Search Spotify
+    const res = await spotifySearch(query);
+    if (!res) throw new Error('Not found on Spotify');
+    song.spotifyId = res.id;
+    song.spotifyName = res.name;
+    song.spotifyArtist = res.artists.map(a=>a.name).join(', ');
+    song.spotifyUri = res.uri;
+    song.durationMs = res.duration_ms;
+    song.artUrl = res.album?.images?.[1]?.url || res.album?.images?.[0]?.url || null;
+    song.status = 'analyzing';
+    renderLibrary();
+
+    // Ask Claude to map high-energy segments
+    const segs = await analyzeWithClaude(song);
+    song.segments = segs;
+    song.status = 'ready';
+  } catch(e) {
+    song.status = 'error';
+    song.errorMsg = e.message;
+  }
+
+  saveSongs();
+  renderLibrary();
+  document.getElementById('addBtn').disabled = false;
+}
+
+async function spotifySearch(query) {
+  const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  const data = await res.json();
+  return data.tracks?.items?.[0] || null;
+}
+
+async function analyzeWithClaude(song) {
+  const durationSec = Math.round(song.durationMs / 1000);
+  const prompt = `You are an expert music analyst and DJ. Analyze the Bollywood/Hindi song "${song.spotifyName}" by ${song.spotifyArtist} (duration: ${durationSec} seconds).
+
+Identify the HIGH-ENERGY sections perfect for running - these are choruses, drops, beats, high-tempo sections. Skip slow intros, sad verses, slow bridges.
+
+Respond ONLY with a JSON array of segments. Each segment has:
+- "label": short name like "Main Chorus", "Opening Beat", "Final Drop"  
+- "startSec": start time in seconds (integer)
+- "endSec": end time in seconds (integer)
+- "reason": one sentence why this section is high energy
+
+Rules:
+- Minimum segment duration: 20 seconds
+- Maximum segment duration: 90 seconds
+- Include 2-5 segments per song
+- Be accurate to the actual song structure
+- Return ONLY the JSON array, no other text, no markdown`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  const text = data.content?.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+  const parsed = JSON.parse(text);
+  return parsed;
+}
+
+function removeSong(i) {
+  songs.splice(i, 1);
+  saveSongs();
+  renderLibrary();
+}
+
+// ── MASHUP ──
+async function startMashup() {
+  const ready = songs.filter(s => s.segments && s.spotifyId);
+  if (ready.length === 0) { showToast('No analyzed songs yet!'); return; }
+
+  // Build creative queue using Claude
+  showAnalyzingOverlay(true);
+  try {
+    mashupQueue = await buildCreativeQueue(ready);
+    showAnalyzingOverlay(false);
+    showScreen('djScreen');
+    renderQueue();
+    currentQueueIdx = 0;
+    isPlaying = true;
+    isPaused = false;
+    await playSegment(currentQueueIdx);
+  } catch(e) {
+    showAnalyzingOverlay(false);
+    showToast('Error building mashup: ' + e.message);
+  }
+}
+
+async function buildCreativeQueue(readySongs) {
+  const songList = readySongs.map(s => ({
+    name: s.spotifyName,
+    artist: s.spotifyArtist,
+    segments: s.segments.map(seg => ({ label: seg.label, startSec: seg.startSec, endSec: seg.endSec, reason: seg.reason }))
+  }));
+
+  const prompt = `You are an expert running DJ creating a high-energy mashup for a runner.
+
+Songs available:
+${JSON.stringify(songList, null, 2)}
+
+Create an energetic running mashup sequence. Rules:
+- Total 15-25 segments in the queue
+- Keep energy HIGH throughout - no back-to-back slow moments
+- Strategically repeat songs/segments (a banger can appear 2-3 times)  
+- Think about running arc: warm up build → sustained peak → final push
+- Vary between songs to keep it fresh
+- Reference segments by exact song name and segment label
+
+Respond ONLY with a JSON array. Each item:
+{
+  "songName": "exact song name from the list",
+  "segmentLabel": "exact segment label",
+  "djNote": "brief DJ reasoning (e.g. 'Energy peak - perfect for sprint')"
+}
+
+Return ONLY the JSON array.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  const text = data.content?.map(c => c.text||'').join('').replace(/```json|```/g,'').trim();
+  const plan = JSON.parse(text);
+
+  // Resolve to actual song objects
+  return plan.map(item => {
+    const song = readySongs.find(s => s.spotifyName === item.songName);
+    if (!song) return null;
+    const seg = song.segments.find(s => s.label === item.segmentLabel);
+    if (!seg) return null;
+    return { song, seg, djNote: item.djNote };
+  }).filter(Boolean);
+}
+
+async function playSegment(idx) {
+  if (idx >= mashupQueue.length) {
+    showToast('Mashup complete! 🎉');
+    document.getElementById('djBadge').textContent = 'DONE';
+    return;
+  }
+  const item = mashupQueue[idx];
+  const { song, seg } = item;
+
+  updateNowPlaying(item);
+  renderQueue();
+
+  // Seek Spotify to the segment start
+  await fetch(`https://api.spotify.com/v1/me/player/play`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uris: [song.spotifyUri], position_ms: seg.startSec * 1000 })
+  });
+
+  segmentStartTime = Date.now();
+  segmentDuration = (seg.endSec - seg.startSec) * 1000;
+  startProgress(seg.startSec, seg.endSec);
+
+  // Auto-advance when segment ends
+  clearTimeout(window._segTimer);
+  window._segTimer = setTimeout(() => {
+    if (!isPaused) nextSegment();
+  }, segmentDuration);
+}
+
+function startProgress(startSec, endSec) {
+  clearInterval(progressInterval);
+  const totalSec = endSec - startSec;
+  progressInterval = setInterval(() => {
+    if (isPaused) return;
+    const elapsed = (Date.now() - segmentStartTime) / 1000;
+    const pct = Math.min((elapsed / totalSec) * 100, 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progCurrent').textContent = fmt(elapsed);
+    document.getElementById('progEnd').textContent = fmt(totalSec);
+  }, 500);
+}
+
+function fmt(s) {
+  s = Math.max(0, Math.floor(s));
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+function updateNowPlaying(item) {
+  const { song, seg, djNote } = item;
+  document.getElementById('npTitle').textContent = song.spotifyName;
+  document.getElementById('npArtist').textContent = song.spotifyArtist;
+  document.getElementById('npSection').textContent = `${seg.label} · ${djNote || ''}`;
+  const art = document.getElementById('npArt');
+  if (song.artUrl) {
+    art.innerHTML = `<img src="${song.artUrl}" />`;
+  } else {
+    art.innerHTML = '🎵';
+  }
+}
+
+function renderQueue() {
+  const panel = document.getElementById('queuePanel');
+  panel.innerHTML = `<div class="queue-title">Up Next</div>` + mashupQueue.map((item, i) => `
+    <div class="queue-item ${i === currentQueueIdx ? 'active' : ''}">
+      <span class="queue-num">${i === currentQueueIdx ? '▶' : i+1}</span>
+      <span>${item.song.spotifyName}</span>
+      <span class="queue-seg-info">${item.seg.label}</span>
+    </div>
+  `).join('');
+  // Scroll to active
+  const active = panel.querySelector('.active');
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+async function nextSegment() {
+  clearTimeout(window._segTimer);
+  currentQueueIdx++;
+  if (currentQueueIdx >= mashupQueue.length) {
+    clearInterval(progressInterval);
+    document.getElementById('djBadge').textContent = 'DONE';
+    showToast('Mashup complete! 🎉');
+    return;
+  }
+  await playSegment(currentQueueIdx);
+}
+
+async function prevSegment() {
+  clearTimeout(window._segTimer);
+  currentQueueIdx = Math.max(0, currentQueueIdx - 1);
+  await playSegment(currentQueueIdx);
+}
+
+async function togglePlayPause() {
+  const btn = document.getElementById('playPauseBtn');
+  if (!isPaused) {
+    isPaused = true;
+    pausedAt = Date.now();
+    clearTimeout(window._segTimer);
+    btn.textContent = '▶';
+    await fetch('https://api.spotify.com/v1/me/player/pause', {
+      method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
+    });
+  } else {
+    isPaused = false;
+    const pausedDuration = Date.now() - pausedAt;
+    segmentStartTime += pausedDuration;
+    const remaining = segmentDuration - (pausedAt - segmentStartTime + pausedDuration);
+    clearTimeout(window._segTimer);
+    window._segTimer = setTimeout(() => { if(!isPaused) nextSegment(); }, Math.max(0, remaining));
+    btn.textContent = '⏸';
+    await fetch('https://api.spotify.com/v1/me/player/play', {
+      method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
+    });
+  }
+}
+
+function stopAndGoBack() {
+  clearTimeout(window._segTimer);
+  clearInterval(progressInterval);
+  fetch('https://api.spotify.com/v1/me/player/pause', {
+    method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
+  }).catch(()=>{});
+  showScreen('libraryScreen');
+}
+
+// ── OVERLAY ──
+function showAnalyzingOverlay(show, msg) {
+  const existing = document.getElementById('analyzingOverlay');
+  if (!show) { if (existing) existing.remove(); return; }
+  if (existing) return;
+  const el = document.createElement('div');
+  el.id = 'analyzingOverlay';
+  el.className = 'analyzing-overlay';
+  el.innerHTML = `
+    <div class="loader" style="width:32px;height:32px;border-width:3px;margin-bottom:16px"></div>
+    <h2>🎧 Building Your Mashup</h2>
+    <p>Claude is crafting your high-energy running sequence...</p>
+  `;
+  document.body.appendChild(el);
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── PRELOAD DEFAULT SONGS ──
+async function preloadDefaultSongs() {
+  const defaults = [
+    'Twist Neeraj Shridhar',
+    'Shava Shava Kabhi Khushi Kabhie Gham',
+    'Dil Chori Yo Yo Honey Singh',
+    'Badri Ki Dulhania',
+    'O Saki Saki Batla House',
+    'Shararat Dhurandhar',
+    'Aaj Ki Raat Don'
+  ];
+  for (const q of defaults) {
+    const song = { query: q, status: 'searching', spotifyId: null, segments: null };
+    songs.push(song);
+  }
+  saveSongs();
+  renderLibrary();
+
+  for (let i = 0; i < songs.length; i++) {
+    const s = songs[i];
+    try {
+      const res = await spotifySearch(s.query);
+      if (!res) throw new Error('Not found');
+      s.spotifyId = res.id;
+      s.spotifyName = res.name;
+      s.spotifyArtist = res.artists.map(a=>a.name).join(', ');
+      s.spotifyUri = res.uri;
+      s.durationMs = res.duration_ms;
+      s.artUrl = res.album?.images?.[1]?.url || null;
+      s.status = 'analyzing';
+      renderLibrary();
+      const segs = await analyzeWithClaude(s);
+      s.segments = segs;
+      s.status = 'ready';
+    } catch(e) {
+      s.status = 'error';
+      s.errorMsg = e.message;
+    }
+    saveSongs();
+    renderLibrary();
+  }
+}
+
+// ── BOOT ──
+window.addEventListener('load', async () => {
+  await init();
+  // If logged in and library is empty, auto-load the default songs
+  if (accessToken && songs.length === 0) {
+    preloadDefaultSongs();
+  }
+});
+</script>
+</body>
+</html>
