@@ -288,7 +288,6 @@
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  /* LOADER */
   .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #1db954; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -299,14 +298,6 @@
   }
   .analyzing-overlay h2 { font-size: 20px; margin-bottom: 10px; }
   .analyzing-overlay p { color: #888; font-size: 14px; text-align: center; margin-bottom: 24px; }
-  .analyzing-log {
-    background: #111; border: 1px solid #222; border-radius: 12px;
-    padding: 14px; width: 100%; max-width: 360px; max-height: 200px; overflow-y: auto;
-    font-size: 12px; color: #888; font-family: monospace;
-  }
-  .analyzing-log .log-line { margin-bottom: 4px; }
-  .analyzing-log .log-line.ok { color: #1db954; }
-  .analyzing-log .log-line.info { color: #00d4ff; }
 </style>
 </head>
 <body>
@@ -360,9 +351,9 @@
     <div class="progress-times"><span id="progCurrent">0:00</span><span id="progEnd">0:00</span></div>
   </div>
   <div class="dj-controls">
-    <button class="ctrl-btn" onclick="prevSegment()" title="Previous">⏮</button>
+    <button class="ctrl-btn" onclick="prevSegment()">⏮</button>
     <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlayPause()">⏸</button>
-    <button class="ctrl-btn" onclick="nextSegment()" title="Next Segment">⏭</button>
+    <button class="ctrl-btn" onclick="nextSegment()">⏭</button>
   </div>
   <div class="queue-panel" id="queuePanel"></div>
 </div>
@@ -371,8 +362,11 @@
 
 <script>
 const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
-const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
-const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
+// !! IMPORTANT: After deploying to GitHub Pages, replace the line below
+// with your actual GitHub Pages URL, e.g.:
+// const REDIRECT_URI = 'https://yourname.github.io/running-mashup/';
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 
 let accessToken = null;
 let songs = [];
@@ -385,18 +379,18 @@ let segmentDuration = null;
 let isPaused = false;
 let pausedAt = null;
 
-// ── STORAGE ──
-async function saveSongs() {
-  try { await window.storage.set('running-mashup-songs', JSON.stringify(songs)); } catch(e){}
+// ── STORAGE (localStorage since this runs standalone) ──
+function saveSongs() {
+  try { localStorage.setItem('rmj-songs', JSON.stringify(songs)); } catch(e){}
 }
-async function loadSongs() {
+function loadSongs() {
   try {
-    const r = await window.storage.get('running-mashup-songs');
-    if (r) songs = JSON.parse(r.value);
+    const r = localStorage.getItem('rmj-songs');
+    if (r) songs = JSON.parse(r);
   } catch(e){ songs = []; }
 }
 
-// ── AUTH ──
+// ── AUTH (PKCE) ──
 function loginSpotify() {
   const verifier = generateCodeVerifier(128);
   sessionStorage.setItem('pkce_verifier', verifier);
@@ -425,7 +419,8 @@ function generateCodeVerifier(len) {
 async function generateCodeChallenge(verifier) {
   const data = new TextEncoder().encode(verifier);
   const digest = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
 async function handleCallback(code) {
@@ -445,11 +440,11 @@ async function handleCallback(code) {
   const data = await res.json();
   if (data.access_token) {
     accessToken = data.access_token;
-    sessionStorage.setItem('spotify_token', accessToken);
+    localStorage.setItem('spotify_token', accessToken);
     window.history.replaceState({}, '', window.location.pathname);
-    await initLibrary();
+    initLibrary();
   } else {
-    showToast('Auth failed. Please try again.');
+    showToast('Auth failed — check Redirect URI in Spotify Dashboard');
   }
 }
 
@@ -458,21 +453,20 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   if (code) {
-    showScreen('authScreen');
     await handleCallback(code);
     return;
   }
-  const saved = sessionStorage.getItem('spotify_token');
+  const saved = localStorage.getItem('spotify_token');
   if (saved) {
     accessToken = saved;
-    await initLibrary();
+    initLibrary();
   } else {
     showScreen('authScreen');
   }
 }
 
-async function initLibrary() {
-  await loadSongs();
+function initLibrary() {
+  loadSongs();
   renderLibrary();
   showScreen('libraryScreen');
 }
@@ -490,26 +484,28 @@ function renderLibrary() {
   const playBtn = document.getElementById('playAllBtn');
 
   if (songs.length === 0) {
-    list.innerHTML = '';
-    list.appendChild(empty);
-    empty.style.display = 'block';
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🎶</div><div>Add songs to get started</div></div>';
     playBtn.disabled = true;
     return;
   }
-  empty.style.display = 'none';
   const readyCount = songs.filter(s => s.segments && s.spotifyId).length;
   playBtn.disabled = readyCount === 0;
 
   list.innerHTML = songs.map((s, i) => `
     <div class="song-card ${s.status || ''}" id="card-${i}">
-      ${s.artUrl ? `<img class="song-art" src="${s.artUrl}" />` : `<div class="song-art-placeholder">🎵</div>`}
+      ${s.artUrl
+        ? `<img class="song-art" src="${s.artUrl}" />`
+        : `<div class="song-art-placeholder">🎵</div>`}
       <div class="song-info">
         <div class="song-name">${s.spotifyName || s.query}</div>
         ${s.spotifyArtist ? `<div class="song-artist">${s.spotifyArtist}</div>` : ''}
-        ${s.segments ? `<div class="song-segments">✓ ${s.segments.length} high-energy segments mapped</div>` :
-          s.status === 'analyzing' ? `<div class="song-status"><span class="loader"></span> Analyzing...</div>` :
-          s.status === 'error' ? `<div class="song-status" style="color:#ff4444">⚠ ${s.errorMsg || 'Error'}</div>` :
-          `<div class="song-status">Queued...</div>`}
+        ${s.segments
+          ? `<div class="song-segments">✓ ${s.segments.length} high-energy segments</div>`
+          : s.status === 'analyzing'
+            ? `<div class="song-status"><span class="loader"></span> Analyzing...</div>`
+            : s.status === 'error'
+              ? `<div class="song-status" style="color:#ff4444">⚠ ${s.errorMsg || 'Error'}</div>`
+              : `<div class="song-status">Queued...</div>`}
       </div>
       <button class="remove-btn" onclick="removeSong(${i})">×</button>
     </div>
@@ -529,19 +525,17 @@ async function addSong() {
   renderLibrary();
 
   try {
-    // Search Spotify
     const res = await spotifySearch(query);
     if (!res) throw new Error('Not found on Spotify');
     song.spotifyId = res.id;
     song.spotifyName = res.name;
-    song.spotifyArtist = res.artists.map(a=>a.name).join(', ');
+    song.spotifyArtist = res.artists.map(a => a.name).join(', ');
     song.spotifyUri = res.uri;
     song.durationMs = res.duration_ms;
     song.artUrl = res.album?.images?.[1]?.url || res.album?.images?.[0]?.url || null;
     song.status = 'analyzing';
     renderLibrary();
 
-    // Ask Claude to map high-energy segments
     const segs = await analyzeWithClaude(song);
     song.segments = segs;
     song.status = 'ready';
@@ -556,9 +550,16 @@ async function addSong() {
 }
 
 async function spotifySearch(query) {
-  const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
+  const res = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (res.status === 401) {
+    localStorage.removeItem('spotify_token');
+    showToast('Session expired — please reconnect Spotify');
+    showScreen('authScreen');
+    return null;
+  }
   const data = await res.json();
   return data.tracks?.items?.[0] || null;
 }
@@ -567,10 +568,10 @@ async function analyzeWithClaude(song) {
   const durationSec = Math.round(song.durationMs / 1000);
   const prompt = `You are an expert music analyst and DJ. Analyze the Bollywood/Hindi song "${song.spotifyName}" by ${song.spotifyArtist} (duration: ${durationSec} seconds).
 
-Identify the HIGH-ENERGY sections perfect for running - these are choruses, drops, beats, high-tempo sections. Skip slow intros, sad verses, slow bridges.
+Identify HIGH-ENERGY sections perfect for running — choruses, drops, beats, high-tempo sections. Skip slow intros, sad verses, slow bridges.
 
-Respond ONLY with a JSON array of segments. Each segment has:
-- "label": short name like "Main Chorus", "Opening Beat", "Final Drop"  
+Respond ONLY with a JSON array of segments. Each segment:
+- "label": short name like "Main Chorus", "Opening Beat", "Final Drop"
 - "startSec": start time in seconds (integer)
 - "endSec": end time in seconds (integer)
 - "reason": one sentence why this section is high energy
@@ -580,7 +581,7 @@ Rules:
 - Maximum segment duration: 90 seconds
 - Include 2-5 segments per song
 - Be accurate to the actual song structure
-- Return ONLY the JSON array, no other text, no markdown`;
+- Return ONLY the JSON array, no other text, no markdown backticks`;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -592,9 +593,8 @@ Rules:
     })
   });
   const data = await res.json();
-  const text = data.content?.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
-  const parsed = JSON.parse(text);
-  return parsed;
+  const text = data.content?.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
+  return JSON.parse(text);
 }
 
 function removeSong(i) {
@@ -608,7 +608,6 @@ async function startMashup() {
   const ready = songs.filter(s => s.segments && s.spotifyId);
   if (ready.length === 0) { showToast('No analyzed songs yet!'); return; }
 
-  // Build creative queue using Claude
   showAnalyzingOverlay(true);
   try {
     mashupQueue = await buildCreativeQueue(ready);
@@ -616,9 +615,8 @@ async function startMashup() {
     showScreen('djScreen');
     renderQueue();
     currentQueueIdx = 0;
-    isPlaying = true;
     isPaused = false;
-    await playSegment(currentQueueIdx);
+    await playSegment(0);
   } catch(e) {
     showAnalyzingOverlay(false);
     showToast('Error building mashup: ' + e.message);
@@ -629,7 +627,12 @@ async function buildCreativeQueue(readySongs) {
   const songList = readySongs.map(s => ({
     name: s.spotifyName,
     artist: s.spotifyArtist,
-    segments: s.segments.map(seg => ({ label: seg.label, startSec: seg.startSec, endSec: seg.endSec, reason: seg.reason }))
+    segments: s.segments.map(seg => ({
+      label: seg.label,
+      startSec: seg.startSec,
+      endSec: seg.endSec,
+      reason: seg.reason
+    }))
   }));
 
   const prompt = `You are an expert running DJ creating a high-energy mashup for a runner.
@@ -639,9 +642,9 @@ ${JSON.stringify(songList, null, 2)}
 
 Create an energetic running mashup sequence. Rules:
 - Total 15-25 segments in the queue
-- Keep energy HIGH throughout - no back-to-back slow moments
-- Strategically repeat songs/segments (a banger can appear 2-3 times)  
-- Think about running arc: warm up build → sustained peak → final push
+- Keep energy HIGH throughout — no back-to-back slow moments
+- Strategically repeat songs/segments (a banger can appear 2-3 times)
+- Think about running arc: warm-up build → sustained peak → final push
 - Vary between songs to keep it fresh
 - Reference segments by exact song name and segment label
 
@@ -649,10 +652,10 @@ Respond ONLY with a JSON array. Each item:
 {
   "songName": "exact song name from the list",
   "segmentLabel": "exact segment label",
-  "djNote": "brief DJ reasoning (e.g. 'Energy peak - perfect for sprint')"
+  "djNote": "brief DJ note e.g. 'Energy peak — sprint time!'"
 }
 
-Return ONLY the JSON array.`;
+Return ONLY the JSON array, no markdown, no preamble.`;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -664,10 +667,9 @@ Return ONLY the JSON array.`;
     })
   });
   const data = await res.json();
-  const text = data.content?.map(c => c.text||'').join('').replace(/```json|```/g,'').trim();
+  const text = data.content?.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
   const plan = JSON.parse(text);
 
-  // Resolve to actual song objects
   return plan.map(item => {
     const song = readySongs.find(s => s.spotifyName === item.songName);
     if (!song) return null;
@@ -681,16 +683,15 @@ async function playSegment(idx) {
   if (idx >= mashupQueue.length) {
     showToast('Mashup complete! 🎉');
     document.getElementById('djBadge').textContent = 'DONE';
+    clearInterval(progressInterval);
     return;
   }
-  const item = mashupQueue[idx];
-  const { song, seg } = item;
+  const { song, seg, djNote } = mashupQueue[idx];
 
-  updateNowPlaying(item);
+  updateNowPlaying(mashupQueue[idx]);
   renderQueue();
 
-  // Seek Spotify to the segment start
-  await fetch(`https://api.spotify.com/v1/me/player/play`, {
+  await fetch('https://api.spotify.com/v1/me/player/play', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ uris: [song.spotifyUri], position_ms: seg.startSec * 1000 })
@@ -700,7 +701,6 @@ async function playSegment(idx) {
   segmentDuration = (seg.endSec - seg.startSec) * 1000;
   startProgress(seg.startSec, seg.endSec);
 
-  // Auto-advance when segment ends
   clearTimeout(window._segTimer);
   window._segTimer = setTimeout(() => {
     if (!isPaused) nextSegment();
@@ -722,45 +722,33 @@ function startProgress(startSec, endSec) {
 
 function fmt(s) {
   s = Math.max(0, Math.floor(s));
-  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-function updateNowPlaying(item) {
-  const { song, seg, djNote } = item;
+function updateNowPlaying({ song, seg, djNote }) {
   document.getElementById('npTitle').textContent = song.spotifyName;
   document.getElementById('npArtist').textContent = song.spotifyArtist;
   document.getElementById('npSection').textContent = `${seg.label} · ${djNote || ''}`;
   const art = document.getElementById('npArt');
-  if (song.artUrl) {
-    art.innerHTML = `<img src="${song.artUrl}" />`;
-  } else {
-    art.innerHTML = '🎵';
-  }
+  art.innerHTML = song.artUrl ? `<img src="${song.artUrl}" />` : '🎵';
 }
 
 function renderQueue() {
   const panel = document.getElementById('queuePanel');
-  panel.innerHTML = `<div class="queue-title">Up Next</div>` + mashupQueue.map((item, i) => `
-    <div class="queue-item ${i === currentQueueIdx ? 'active' : ''}">
-      <span class="queue-num">${i === currentQueueIdx ? '▶' : i+1}</span>
-      <span>${item.song.spotifyName}</span>
-      <span class="queue-seg-info">${item.seg.label}</span>
-    </div>
-  `).join('');
-  // Scroll to active
-  const active = panel.querySelector('.active');
-  if (active) active.scrollIntoView({ block: 'nearest' });
+  panel.innerHTML = `<div class="queue-title">Up Next</div>` +
+    mashupQueue.map((item, i) => `
+      <div class="queue-item ${i === currentQueueIdx ? 'active' : ''}">
+        <span class="queue-num">${i === currentQueueIdx ? '▶' : i + 1}</span>
+        <span>${item.song.spotifyName}</span>
+        <span class="queue-seg-info">${item.seg.label}</span>
+      </div>
+    `).join('');
+  panel.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
 }
 
 async function nextSegment() {
   clearTimeout(window._segTimer);
   currentQueueIdx++;
-  if (currentQueueIdx >= mashupQueue.length) {
-    clearInterval(progressInterval);
-    document.getElementById('djBadge').textContent = 'DONE';
-    showToast('Mashup complete! 🎉');
-    return;
-  }
   await playSegment(currentQueueIdx);
 }
 
@@ -784,9 +772,9 @@ async function togglePlayPause() {
     isPaused = false;
     const pausedDuration = Date.now() - pausedAt;
     segmentStartTime += pausedDuration;
-    const remaining = segmentDuration - (pausedAt - segmentStartTime + pausedDuration);
+    const remaining = segmentDuration - (Date.now() - segmentStartTime);
     clearTimeout(window._segTimer);
-    window._segTimer = setTimeout(() => { if(!isPaused) nextSegment(); }, Math.max(0, remaining));
+    window._segTimer = setTimeout(() => { if (!isPaused) nextSegment(); }, Math.max(0, remaining));
     btn.textContent = '⏸';
     await fetch('https://api.spotify.com/v1/me/player/play', {
       method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
@@ -799,14 +787,13 @@ function stopAndGoBack() {
   clearInterval(progressInterval);
   fetch('https://api.spotify.com/v1/me/player/pause', {
     method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
-  }).catch(()=>{});
+  }).catch(() => {});
   showScreen('libraryScreen');
 }
 
-// ── OVERLAY ──
-function showAnalyzingOverlay(show, msg) {
+function showAnalyzingOverlay(show) {
   const existing = document.getElementById('analyzingOverlay');
-  if (!show) { if (existing) existing.remove(); return; }
+  if (!show) { existing?.remove(); return; }
   if (existing) return;
   const el = document.createElement('div');
   el.id = 'analyzingOverlay';
@@ -819,65 +806,14 @@ function showAnalyzingOverlay(show, msg) {
   document.body.appendChild(el);
 }
 
-// ── TOAST ──
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-// ── PRELOAD DEFAULT SONGS ──
-async function preloadDefaultSongs() {
-  const defaults = [
-    'Twist Neeraj Shridhar',
-    'Shava Shava Kabhi Khushi Kabhie Gham',
-    'Dil Chori Yo Yo Honey Singh',
-    'Badri Ki Dulhania',
-    'O Saki Saki Batla House',
-    'Shararat Dhurandhar',
-    'Aaj Ki Raat Don'
-  ];
-  for (const q of defaults) {
-    const song = { query: q, status: 'searching', spotifyId: null, segments: null };
-    songs.push(song);
-  }
-  saveSongs();
-  renderLibrary();
-
-  for (let i = 0; i < songs.length; i++) {
-    const s = songs[i];
-    try {
-      const res = await spotifySearch(s.query);
-      if (!res) throw new Error('Not found');
-      s.spotifyId = res.id;
-      s.spotifyName = res.name;
-      s.spotifyArtist = res.artists.map(a=>a.name).join(', ');
-      s.spotifyUri = res.uri;
-      s.durationMs = res.duration_ms;
-      s.artUrl = res.album?.images?.[1]?.url || null;
-      s.status = 'analyzing';
-      renderLibrary();
-      const segs = await analyzeWithClaude(s);
-      s.segments = segs;
-      s.status = 'ready';
-    } catch(e) {
-      s.status = 'error';
-      s.errorMsg = e.message;
-    }
-    saveSongs();
-    renderLibrary();
-  }
-}
-
-// ── BOOT ──
-window.addEventListener('load', async () => {
-  await init();
-  // If logged in and library is empty, auto-load the default songs
-  if (accessToken && songs.length === 0) {
-    preloadDefaultSongs();
-  }
-});
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
