@@ -6,307 +6,78 @@
 <title>Running Mashup DJ</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #0a0a0a;
-    color: #fff;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; overflow-x: hidden; }
   .screen { display: none; padding: 20px; min-height: 100vh; }
   .screen.active { display: flex; flex-direction: column; }
 
-  /* AUTH SCREEN */
-  #authScreen {
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
-  }
+  #authScreen { align-items: center; justify-content: center; background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%); }
   .logo { font-size: 48px; margin-bottom: 12px; }
   .app-title { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #1db954, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .app-sub { color: #888; font-size: 13px; margin-top: 6px; margin-bottom: 40px; }
-  .spotify-btn {
-    background: #1db954;
-    color: #000;
-    border: none;
-    padding: 16px 36px;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: transform 0.2s, background 0.2s;
-  }
+  .spotify-btn { background: #1db954; color: #000; border: none; padding: 16px 36px; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: transform 0.2s; }
   .spotify-btn:hover { background: #1ed760; transform: scale(1.04); }
   .note { color: #555; font-size: 11px; margin-top: 16px; text-align: center; max-width: 280px; }
 
-  /* LIBRARY SCREEN */
   #libraryScreen { background: #0a0a0a; }
-  .top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #1a1a1a;
-  }
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #1a1a1a; }
   .top-bar-title { font-size: 20px; font-weight: 800; }
-  .play-all-btn {
-    background: #1db954;
-    color: #000;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
+  .play-all-btn { background: #1db954; color: #000; border: none; padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.2s; }
   .play-all-btn:hover { transform: scale(1.05); }
   .play-all-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .add-song-box {
-    background: #111;
-    border: 1px solid #222;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 20px;
-  }
-  .add-song-box h3 { font-size: 13px; color: #888; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
-  .input-row { display: flex; gap: 8px; }
-  .song-input {
-    flex: 1;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: #fff;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .song-input:focus { border-color: #1db954; }
-  .add-btn {
-    background: #1db954;
-    color: #000;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .song-list { flex: 1; overflow-y: auto; }
-  .song-card {
-    background: #111;
-    border: 1px solid #1a1a1a;
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: border-color 0.2s;
-  }
-  .song-card.analyzing { border-color: #1db954; animation: pulse 1.5s infinite; }
-  .song-card.ready { border-color: #1db954; }
-  .song-card.error { border-color: #ff4444; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-  .song-art {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    background: #222;
-    flex-shrink: 0;
-    object-fit: cover;
-  }
-  .song-art-placeholder {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #1db954, #00d4ff);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
+  .song-card { background: #111; border: 1px solid #1db954; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+  .song-art { width: 48px; height: 48px; border-radius: 8px; background: #222; flex-shrink: 0; object-fit: cover; }
+  .song-art-placeholder { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #1db954, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
   .song-info { flex: 1; min-width: 0; }
   .song-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .song-artist { font-size: 12px; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-artist { font-size: 12px; color: #888; margin-top: 2px; }
   .song-segments { font-size: 11px; color: #1db954; margin-top: 4px; }
-  .song-status { font-size: 11px; color: #888; margin-top: 4px; }
-  .remove-btn {
-    background: none;
-    border: 1px solid #333;
-    color: #888;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-  }
-  .remove-btn:hover { border-color: #ff4444; color: #ff4444; }
   .empty-state { text-align: center; padding: 40px 20px; color: #444; }
   .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
 
-  /* DJ SCREEN */
-  #djScreen {
-    background: linear-gradient(180deg, #0d1f0d 0%, #0a0a0a 100%);
-    align-items: center;
-  }
-  .dj-header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-  .back-btn {
-    background: none;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 50px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .dj-status-badge {
-    background: #1db954;
-    color: #000;
-    padding: 6px 14px;
-    border-radius: 50px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-  .now-playing-art {
-    width: 200px;
-    height: 200px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #1db954, #00d4ff);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 80px;
-    margin-bottom: 24px;
-    box-shadow: 0 0 60px rgba(29,185,84,0.3);
-    overflow: hidden;
-  }
+  #djScreen { background: linear-gradient(180deg, #0d1f0d 0%, #0a0a0a 100%); align-items: center; }
+  .dj-header { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .back-btn { background: none; border: 1px solid #333; color: #fff; padding: 8px 16px; border-radius: 50px; cursor: pointer; font-size: 13px; }
+  .dj-status-badge { background: #1db954; color: #000; padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 700; }
+  .now-playing-art { width: 200px; height: 200px; border-radius: 20px; background: linear-gradient(135deg, #1db954, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 80px; margin-bottom: 24px; box-shadow: 0 0 60px rgba(29,185,84,0.3); overflow: hidden; }
   .now-playing-art img { width: 100%; height: 100%; object-fit: cover; }
   .now-playing-label { font-size: 11px; color: #1db954; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
   .now-playing-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 4px; }
   .now-playing-artist { font-size: 14px; color: #888; text-align: center; margin-bottom: 6px; }
-  .now-playing-section { font-size: 12px; color: #1db954; text-align: center; margin-bottom: 24px; }
+  .now-playing-section { font-size: 12px; color: #1db954; text-align: center; margin-bottom: 24px; padding: 0 20px; }
   .progress-wrap { width: 100%; max-width: 340px; margin-bottom: 24px; }
-  .progress-bar-bg {
-    width: 100%;
-    height: 4px;
-    background: #222;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #1db954, #00d4ff);
-    border-radius: 4px;
-    width: 0%;
-    transition: width 1s linear;
-  }
+  .progress-bar-bg { width: 100%; height: 4px; background: #222; border-radius: 4px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #1db954, #00d4ff); border-radius: 4px; width: 0%; transition: width 1s linear; }
   .progress-times { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #555; }
   .dj-controls { display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
-  .ctrl-btn {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #fff;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
+  .ctrl-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; width: 52px; height: 52px; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .ctrl-btn:hover { background: #222; border-color: #555; }
-  .ctrl-btn.primary {
-    background: #1db954;
-    border-color: #1db954;
-    color: #000;
-    width: 64px;
-    height: 64px;
-    font-size: 24px;
-  }
+  .ctrl-btn.primary { background: #1db954; border-color: #1db954; color: #000; width: 64px; height: 64px; font-size: 24px; }
   .ctrl-btn.primary:hover { background: #1ed760; }
-  .queue-panel {
-    width: 100%;
-    max-width: 400px;
-    background: #111;
-    border: 1px solid #1a1a1a;
-    border-radius: 16px;
-    padding: 14px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
+  .queue-panel { width: 100%; max-width: 400px; background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 14px; max-height: 200px; overflow-y: auto; }
   .queue-title { font-size: 11px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
-  .queue-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid #1a1a1a;
-    font-size: 13px;
-  }
+  .queue-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
   .queue-item:last-child { border-bottom: none; }
   .queue-item.active { color: #1db954; font-weight: 600; }
   .queue-num { color: #444; font-size: 11px; width: 18px; text-align: center; flex-shrink: 0; }
   .queue-seg-info { font-size: 11px; color: #555; margin-left: auto; flex-shrink: 0; }
 
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: #222;
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 50px;
-    font-size: 13px;
-    z-index: 999;
-    transition: transform 0.3s;
-    white-space: nowrap;
-    border: 1px solid #333;
-  }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #222; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: 13px; z-index: 999; transition: transform 0.3s; white-space: nowrap; border: 1px solid #333; }
   .toast.show { transform: translateX(-50%) translateY(0); }
-
   .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #1db954; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  .analyzing-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 100; padding: 30px;
-  }
+  .analyzing-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 30px; }
   .analyzing-overlay h2 { font-size: 20px; margin-bottom: 10px; }
-  .analyzing-overlay p { color: #888; font-size: 14px; text-align: center; margin-bottom: 24px; }
+  .analyzing-overlay p { color: #888; font-size: 14px; text-align: center; }
 </style>
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
 <div id="authScreen" class="screen active">
   <div class="logo">🎧</div>
   <div class="app-title">Running Mashup DJ</div>
-  <div class="app-sub">AI-powered high-energy running mix</div>
+  <div class="app-sub">AI-crafted high-energy running mix</div>
   <button class="spotify-btn" onclick="loginSpotify()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
     Connect with Spotify
@@ -314,28 +85,14 @@
   <div class="note">Requires Spotify Premium for playback control</div>
 </div>
 
-<!-- LIBRARY SCREEN -->
 <div id="libraryScreen" class="screen">
   <div class="top-bar">
     <div class="top-bar-title">🎵 My Library</div>
-    <button class="play-all-btn" id="playAllBtn" onclick="startMashup()" disabled>▶ Run Mashup</button>
+    <button class="play-all-btn" id="playAllBtn" onclick="startMashup()">▶ Run Mashup</button>
   </div>
-  <div class="add-song-box">
-    <h3>Add Song</h3>
-    <div class="input-row">
-      <input class="song-input" id="songInput" placeholder="Song name + artist..." onkeydown="if(event.key==='Enter')addSong()" />
-      <button class="add-btn" id="addBtn" onclick="addSong()">Add</button>
-    </div>
-  </div>
-  <div class="song-list" id="songList">
-    <div class="empty-state" id="emptyState">
-      <div class="emoji">🎶</div>
-      <div>Add songs to get started</div>
-    </div>
-  </div>
+  <div class="song-list" id="songList"></div>
 </div>
 
-<!-- DJ SCREEN -->
 <div id="djScreen" class="screen">
   <div class="dj-header" style="width:100%;max-width:400px;">
     <button class="back-btn" onclick="stopAndGoBack()">← Library</button>
@@ -362,47 +119,128 @@
 
 <script>
 const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
-// !! IMPORTANT: After deploying to GitHub Pages, replace the line below
-// with your actual GitHub Pages URL, e.g.:
-// const REDIRECT_URI = 'https://yourname.github.io/running-mashup/';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
-const CLAUDE_PROXY = 'https://mashup.smitdshah2001.workers.dev';
+
+// ── SONG LIBRARY (hardcoded by DJ Claude) ──
+// Each song has spotifyQuery for searching + hand-crafted high-energy segments
+const SONG_LIBRARY = [
+  {
+    query: 'Twist Neeraj Shridhar',
+    segments: [
+      { label: 'Opening Hook', startSec: 28, endSec: 68, note: 'Punchy intro beat — sets the pace' },
+      { label: 'Main Chorus', startSec: 68, endSec: 110, note: 'Full chorus explosion — peak energy' },
+      { label: 'Second Chorus', startSec: 138, endSec: 178, note: 'Chorus returns harder — sprint fuel' },
+      { label: 'Final Push', startSec: 198, endSec: 230, note: 'Final chorus — leave it all on the road' },
+    ]
+  },
+  {
+    query: 'Shava Shava Kabhi Khushi Kabhie Gham',
+    segments: [
+      { label: 'Opening Beat', startSec: 15, endSec: 55, note: 'Infectious dhol beat — instant energy' },
+      { label: 'Main Hook', startSec: 55, endSec: 100, note: 'Shava Shava hook hits — crowd pleaser' },
+      { label: 'Energy Peak', startSec: 130, endSec: 170, note: 'Full ensemble — maximum joy energy' },
+      { label: 'Final Burst', startSec: 195, endSec: 230, note: 'Final repetition — closing sprint' },
+    ]
+  },
+  {
+    query: 'Dil Chori Yo Yo Honey Singh Sonu Ke Titu Ki Sweety',
+    segments: [
+      { label: 'Intro Drop', startSec: 22, endSec: 62, note: 'YoYo drop hits immediately — momentum builder' },
+      { label: 'Main Chorus', startSec: 62, endSec: 105, note: 'Dil Chori hook — pure running rhythm' },
+      { label: 'Verse Energy', startSec: 120, endSec: 158, note: 'Rap verse drives the pace' },
+      { label: 'Outro Chorus', startSec: 175, endSec: 210, note: 'Final chorus — strong finish' },
+    ]
+  },
+  {
+    query: 'Badri Ki Dulhania title track',
+    segments: [
+      { label: 'Dhol Intro', startSec: 18, endSec: 55, note: 'Dhol beat entry — instant Bollywood rush' },
+      { label: 'Main Chorus', startSec: 55, endSec: 98, note: 'Full chorus — celebratory high energy' },
+      { label: 'Dance Break', startSec: 115, endSec: 155, note: 'Instrumental break — rhythmic and driving' },
+      { label: 'Final Chorus', startSec: 170, endSec: 205, note: 'Triumphant finale — push through the wall' },
+    ]
+  },
+  {
+    query: 'O Saki Saki Batla House Neha Kakkar',
+    segments: [
+      { label: 'Saki Hook', startSec: 30, endSec: 72, note: 'The iconic hook — immediately recognizable' },
+      { label: 'Verse Build', startSec: 85, endSec: 122, note: 'Builds intensity before the drop' },
+      { label: 'Chorus Peak', startSec: 122, endSec: 162, note: 'Full chorus — electric running energy' },
+      { label: 'Final Hook', startSec: 195, endSec: 232, note: 'Hook returns full force — endgame sprint' },
+    ]
+  },
+  {
+    query: 'Shararat Dhurandhar',
+    segments: [
+      { label: 'Beat Drop', startSec: 20, endSec: 58, note: 'Opening beat drop — strong starter' },
+      { label: 'Main Chorus', startSec: 58, endSec: 100, note: 'Chorus energy — rhythmic and powerful' },
+      { label: 'Mid Section', startSec: 118, endSec: 155, note: 'Mid song drive — sustains the pace' },
+      { label: 'Closing Run', startSec: 172, endSec: 210, note: 'Final section — finish line energy' },
+    ]
+  },
+  {
+    query: 'Aaj Ki Raat Don Shah Rukh Khan',
+    segments: [
+      { label: 'Opening Energy', startSec: 8, endSec: 48, note: 'No wasted time — energy from second one' },
+      { label: 'Main Chorus', startSec: 48, endSec: 90, note: 'The iconic chorus — pure adrenaline' },
+      { label: 'Second Verse', startSec: 105, endSec: 143, note: 'Builds back up — keeps momentum alive' },
+      { label: 'Final Chorus', startSec: 158, endSec: 198, note: 'Last chorus — finish strong' },
+    ]
+  }
+];
+
+// ── DJ QUEUE (hand-crafted running arc by Claude) ──
+// Format: [songIndex, segmentIndex]
+// Arc: Warm up → Build → Peak → Sustain → Final Push
+const DJ_QUEUE_PLAN = [
+  // WARM UP — get the legs moving
+  [6, 0], // Aaj Ki Raat - Opening Energy (no wasted time)
+  [3, 0], // Badri Ki Dulhania - Dhol Intro
+  [0, 0], // Twist - Opening Hook
+  // BUILD — heart rate rising
+  [4, 0], // O Saki Saki - Saki Hook
+  [1, 0], // Shava Shava - Opening Beat
+  [2, 0], // Dil Chori - Intro Drop
+  // FIRST PEAK — full sprint
+  [0, 1], // Twist - Main Chorus
+  [6, 1], // Aaj Ki Raat - Main Chorus
+  [4, 2], // O Saki Saki - Chorus Peak
+  // SUSTAIN — keep the pace
+  [5, 0], // Shararat - Beat Drop
+  [3, 1], // Badri Ki Dulhania - Main Chorus
+  [2, 1], // Dil Chori - Main Chorus
+  [1, 1], // Shava Shava - Main Hook
+  // SECOND WIND — re-ignite
+  [0, 2], // Twist - Second Chorus (repeat banger)
+  [4, 3], // O Saki Saki - Final Hook
+  [5, 1], // Shararat - Main Chorus
+  // FINAL PUSH — everything left in the tank
+  [2, 3], // Dil Chori - Outro Chorus
+  [6, 3], // Aaj Ki Raat - Final Chorus
+  [3, 3], // Badri Ki Dulhania - Final Chorus
+  [0, 3], // Twist - Final Push (the ultimate closer)
+];
 
 let accessToken = null;
-let songs = [];
+let resolvedSongs = []; // songs with spotifyId, artUrl etc filled in
 let mashupQueue = [];
 let currentQueueIdx = 0;
-let isPlaying = false;
 let progressInterval = null;
 let segmentStartTime = null;
 let segmentDuration = null;
 let isPaused = false;
 let pausedAt = null;
 
-// ── STORAGE (localStorage since this runs standalone) ──
-function saveSongs() {
-  try { localStorage.setItem('rmj-songs', JSON.stringify(songs)); } catch(e){}
-}
-function loadSongs() {
-  try {
-    const r = localStorage.getItem('rmj-songs');
-    if (r) songs = JSON.parse(r);
-  } catch(e){ songs = []; }
-}
-
-// ── AUTH (PKCE) ──
+// ── AUTH ──
 function loginSpotify() {
   const verifier = generateCodeVerifier(128);
   sessionStorage.setItem('pkce_verifier', verifier);
   generateCodeChallenge(verifier).then(challenge => {
     const params = new URLSearchParams({
-      client_id: CLIENT_ID,
-      response_type: 'code',
-      redirect_uri: REDIRECT_URI,
-      scope: SCOPES,
-      code_challenge_method: 'S256',
-      code_challenge: challenge,
+      client_id: CLIENT_ID, response_type: 'code',
+      redirect_uri: REDIRECT_URI, scope: SCOPES,
+      code_challenge_method: 'S256', code_challenge: challenge,
     });
     window.location.href = 'https://accounts.spotify.com/authorize?' + params;
   });
@@ -410,276 +248,117 @@ function loginSpotify() {
 
 function generateCodeVerifier(len) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  let result = '';
   const arr = new Uint8Array(len);
   crypto.getRandomValues(arr);
-  arr.forEach(b => result += chars[b % chars.length]);
-  return result;
+  return Array.from(arr, b => chars[b % chars.length]).join('');
 }
 
-async function generateCodeChallenge(verifier) {
-  const data = new TextEncoder().encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+async function generateCodeChallenge(v) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
 async function handleCallback(code) {
-  const verifier = sessionStorage.getItem('pkce_verifier');
   const body = new URLSearchParams({
-    client_id: CLIENT_ID,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: REDIRECT_URI,
-    code_verifier: verifier,
+    client_id: CLIENT_ID, grant_type: 'authorization_code',
+    code, redirect_uri: REDIRECT_URI,
+    code_verifier: sessionStorage.getItem('pkce_verifier'),
   });
   const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {'Content-Type':'application/x-www-form-urlencoded'},
-    body
+    method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body
   });
   const data = await res.json();
   if (data.access_token) {
     accessToken = data.access_token;
     localStorage.setItem('spotify_token', accessToken);
     window.history.replaceState({}, '', window.location.pathname);
-    initLibrary();
+    await initLibrary();
   } else {
     showToast('Auth failed — check Redirect URI in Spotify Dashboard');
   }
 }
 
-// ── INIT ──
 async function init() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (code) {
-    await handleCallback(code);
-    return;
-  }
+  const code = new URLSearchParams(window.location.search).get('code');
+  if (code) { await handleCallback(code); return; }
   const saved = localStorage.getItem('spotify_token');
-  if (saved) {
-    accessToken = saved;
-    initLibrary();
-  } else {
-    showScreen('authScreen');
-  }
-}
-
-function initLibrary() {
-  loadSongs();
-  renderLibrary();
-  showScreen('libraryScreen');
-}
-
-// ── SCREENS ──
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  if (saved) { accessToken = saved; await initLibrary(); }
+  else showScreen('authScreen');
 }
 
 // ── LIBRARY ──
-function renderLibrary() {
-  const list = document.getElementById('songList');
-  const empty = document.getElementById('emptyState');
-  const playBtn = document.getElementById('playAllBtn');
+async function initLibrary() {
+  showScreen('libraryScreen');
+  renderLibraryLoading();
+  await resolveSpotifyIds();
+  renderLibrary();
+}
 
-  if (songs.length === 0) {
-    list.innerHTML = '<div class="empty-state"><div class="emoji">🎶</div><div>Add songs to get started</div></div>';
-    playBtn.disabled = true;
-    return;
-  }
-  const readyCount = songs.filter(s => s.segments && s.spotifyId).length;
-  playBtn.disabled = readyCount === 0;
-
-  list.innerHTML = songs.map((s, i) => `
-    <div class="song-card ${s.status || ''}" id="card-${i}">
-      ${s.artUrl
-        ? `<img class="song-art" src="${s.artUrl}" />`
-        : `<div class="song-art-placeholder">🎵</div>`}
+function renderLibraryLoading() {
+  document.getElementById('songList').innerHTML = SONG_LIBRARY.map(s => `
+    <div class="song-card">
+      <div class="song-art-placeholder">🎵</div>
       <div class="song-info">
-        <div class="song-name">${s.spotifyName || s.query}</div>
-        ${s.spotifyArtist ? `<div class="song-artist">${s.spotifyArtist}</div>` : ''}
-        ${s.segments
-          ? `<div class="song-segments">✓ ${s.segments.length} high-energy segments</div>`
-          : s.status === 'analyzing'
-            ? `<div class="song-status"><span class="loader"></span> Analyzing...</div>`
-            : s.status === 'error'
-              ? `<div class="song-status" style="color:#ff4444">⚠ ${s.errorMsg || 'Error'}</div>`
-              : `<div class="song-status">Queued...</div>`}
+        <div class="song-name">${s.query}</div>
+        <div class="song-segments" style="color:#888"><span class="loader"></span> Loading...</div>
       </div>
-      <button class="remove-btn" onclick="removeSong(${i})">×</button>
     </div>
   `).join('');
 }
 
-async function addSong() {
-  const input = document.getElementById('songInput');
-  const query = input.value.trim();
-  if (!query) return;
-  input.value = '';
-  document.getElementById('addBtn').disabled = true;
+async function resolveSpotifyIds() {
+  const cached = localStorage.getItem('rmj-resolved');
+  if (cached) { resolvedSongs = JSON.parse(cached); return; }
 
-  const song = { query, status: 'searching', spotifyId: null, segments: null };
-  songs.push(song);
-  saveSongs();
-  renderLibrary();
-
-  try {
-    const res = await spotifySearch(query);
-    if (!res) throw new Error('Not found on Spotify');
-    song.spotifyId = res.id;
-    song.spotifyName = res.name;
-    song.spotifyArtist = res.artists.map(a => a.name).join(', ');
-    song.spotifyUri = res.uri;
-    song.durationMs = res.duration_ms;
-    song.artUrl = res.album?.images?.[1]?.url || res.album?.images?.[0]?.url || null;
-    song.status = 'analyzing';
-    renderLibrary();
-
-    const segs = await analyzeWithClaude(song);
-    song.segments = segs;
-    song.status = 'ready';
-  } catch(e) {
-    song.status = 'error';
-    song.errorMsg = e.message;
+  resolvedSongs = [];
+  for (const s of SONG_LIBRARY) {
+    try {
+      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(s.query)}&type=track&limit=1`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.status === 401) { localStorage.removeItem('spotify_token'); showScreen('authScreen'); return; }
+      const data = await res.json();
+      const track = data.tracks?.items?.[0];
+      resolvedSongs.push({
+        ...s,
+        spotifyUri: track?.uri || null,
+        spotifyName: track?.name || s.query,
+        spotifyArtist: track?.artists?.map(a=>a.name).join(', ') || '',
+        artUrl: track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null,
+      });
+    } catch(e) {
+      resolvedSongs.push({ ...s, spotifyUri: null, spotifyName: s.query, spotifyArtist: '', artUrl: null });
+    }
   }
-
-  saveSongs();
-  renderLibrary();
-  document.getElementById('addBtn').disabled = false;
+  localStorage.setItem('rmj-resolved', JSON.stringify(resolvedSongs));
 }
 
-async function spotifySearch(query) {
-  const res = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-  if (res.status === 401) {
-    localStorage.removeItem('spotify_token');
-    showToast('Session expired — please reconnect Spotify');
-    showScreen('authScreen');
-    return null;
-  }
-  const data = await res.json();
-  return data.tracks?.items?.[0] || null;
-}
-
-async function analyzeWithClaude(song) {
-  const durationSec = Math.round(song.durationMs / 1000);
-  const prompt = `You are an expert music analyst and DJ. Analyze the Bollywood/Hindi song "${song.spotifyName}" by ${song.spotifyArtist} (duration: ${durationSec} seconds).
-
-Identify HIGH-ENERGY sections perfect for running — choruses, drops, beats, high-tempo sections. Skip slow intros, sad verses, slow bridges.
-
-Respond ONLY with a JSON array of segments. Each segment:
-- "label": short name like "Main Chorus", "Opening Beat", "Final Drop"
-- "startSec": start time in seconds (integer)
-- "endSec": end time in seconds (integer)
-- "reason": one sentence why this section is high energy
-
-Rules:
-- Minimum segment duration: 20 seconds
-- Maximum segment duration: 90 seconds
-- Include 2-5 segments per song
-- Be accurate to the actual song structure
-- Return ONLY the JSON array, no other text, no markdown backticks`;
-
-  const res = await fetch(CLAUDE_PROXY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  if (!data.content) throw new Error('No response from Claude: ' + JSON.stringify(data));
-  const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
-  return JSON.parse(text);
-}
-
-function removeSong(i) {
-  songs.splice(i, 1);
-  saveSongs();
-  renderLibrary();
+function renderLibrary() {
+  document.getElementById('songList').innerHTML = resolvedSongs.map((s, i) => `
+    <div class="song-card">
+      ${s.artUrl ? `<img class="song-art" src="${s.artUrl}" />` : `<div class="song-art-placeholder">🎵</div>`}
+      <div class="song-info">
+        <div class="song-name">${s.spotifyName}</div>
+        <div class="song-artist">${s.spotifyArtist}</div>
+        <div class="song-segments">✓ ${s.segments.length} high-energy segments</div>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ── MASHUP ──
-async function startMashup() {
-  const ready = songs.filter(s => s.segments && s.spotifyId);
-  if (ready.length === 0) { showToast('No analyzed songs yet!'); return; }
+function startMashup() {
+  mashupQueue = DJ_QUEUE_PLAN.map(([si, segi]) => ({
+    song: resolvedSongs[si],
+    seg: resolvedSongs[si].segments[segi],
+  })).filter(item => item.song?.spotifyUri);
 
-  showAnalyzingOverlay(true);
-  try {
-    mashupQueue = await buildCreativeQueue(ready);
-    showAnalyzingOverlay(false);
-    showScreen('djScreen');
-    renderQueue();
-    currentQueueIdx = 0;
-    isPaused = false;
-    await playSegment(0);
-  } catch(e) {
-    showAnalyzingOverlay(false);
-    showToast('Error building mashup: ' + e.message);
-  }
-}
-
-async function buildCreativeQueue(readySongs) {
-  const songList = readySongs.map(s => ({
-    name: s.spotifyName,
-    artist: s.spotifyArtist,
-    segments: s.segments.map(seg => ({
-      label: seg.label,
-      startSec: seg.startSec,
-      endSec: seg.endSec,
-      reason: seg.reason
-    }))
-  }));
-
-  const prompt = `You are an expert running DJ creating a high-energy mashup for a runner.
-
-Songs available:
-${JSON.stringify(songList, null, 2)}
-
-Create an energetic running mashup sequence. Rules:
-- Total 15-25 segments in the queue
-- Keep energy HIGH throughout — no back-to-back slow moments
-- Strategically repeat songs/segments (a banger can appear 2-3 times)
-- Think about running arc: warm-up build → sustained peak → final push
-- Vary between songs to keep it fresh
-- Reference segments by exact song name and segment label
-
-Respond ONLY with a JSON array. Each item:
-{
-  "songName": "exact song name from the list",
-  "segmentLabel": "exact segment label",
-  "djNote": "brief DJ note e.g. 'Energy peak — sprint time!'"
-}
-
-Return ONLY the JSON array, no markdown, no preamble.`;
-
-  const res = await fetch(CLAUDE_PROXY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-  const data = await res.json();
-  const text = data.content?.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
-  const plan = JSON.parse(text);
-
-  return plan.map(item => {
-    const song = readySongs.find(s => s.spotifyName === item.songName);
-    if (!song) return null;
-    const seg = song.segments.find(s => s.label === item.segmentLabel);
-    if (!seg) return null;
-    return { song, seg, djNote: item.djNote };
-  }).filter(Boolean);
+  if (mashupQueue.length === 0) { showToast('No songs loaded yet!'); return; }
+  currentQueueIdx = 0;
+  isPaused = false;
+  showScreen('djScreen');
+  renderQueue();
+  playSegment(0);
 }
 
 async function playSegment(idx) {
@@ -689,8 +368,7 @@ async function playSegment(idx) {
     clearInterval(progressInterval);
     return;
   }
-  const { song, seg, djNote } = mashupQueue[idx];
-
+  const { song, seg } = mashupQueue[idx];
   updateNowPlaying(mashupQueue[idx]);
   renderQueue();
 
@@ -703,35 +381,31 @@ async function playSegment(idx) {
   segmentStartTime = Date.now();
   segmentDuration = (seg.endSec - seg.startSec) * 1000;
   startProgress(seg.startSec, seg.endSec);
-
   clearTimeout(window._segTimer);
-  window._segTimer = setTimeout(() => {
-    if (!isPaused) nextSegment();
-  }, segmentDuration);
+  window._segTimer = setTimeout(() => { if (!isPaused) nextSegment(); }, segmentDuration);
 }
 
 function startProgress(startSec, endSec) {
   clearInterval(progressInterval);
-  const totalSec = endSec - startSec;
+  const total = endSec - startSec;
   progressInterval = setInterval(() => {
     if (isPaused) return;
     const elapsed = (Date.now() - segmentStartTime) / 1000;
-    const pct = Math.min((elapsed / totalSec) * 100, 100);
-    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressFill').style.width = Math.min((elapsed/total)*100, 100) + '%';
     document.getElementById('progCurrent').textContent = fmt(elapsed);
-    document.getElementById('progEnd').textContent = fmt(totalSec);
+    document.getElementById('progEnd').textContent = fmt(total);
   }, 500);
 }
 
 function fmt(s) {
   s = Math.max(0, Math.floor(s));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 }
 
-function updateNowPlaying({ song, seg, djNote }) {
+function updateNowPlaying({ song, seg }) {
   document.getElementById('npTitle').textContent = song.spotifyName;
   document.getElementById('npArtist').textContent = song.spotifyArtist;
-  document.getElementById('npSection').textContent = `${seg.label} · ${djNote || ''}`;
+  document.getElementById('npSection').textContent = `${seg.label} · ${seg.note}`;
   const art = document.getElementById('npArt');
   art.innerHTML = song.artUrl ? `<img src="${song.artUrl}" />` : '🎵';
 }
@@ -741,7 +415,7 @@ function renderQueue() {
   panel.innerHTML = `<div class="queue-title">Up Next</div>` +
     mashupQueue.map((item, i) => `
       <div class="queue-item ${i === currentQueueIdx ? 'active' : ''}">
-        <span class="queue-num">${i === currentQueueIdx ? '▶' : i + 1}</span>
+        <span class="queue-num">${i === currentQueueIdx ? '▶' : i+1}</span>
         <span>${item.song.spotifyName}</span>
         <span class="queue-seg-info">${item.seg.label}</span>
       </div>
@@ -764,13 +438,10 @@ async function prevSegment() {
 async function togglePlayPause() {
   const btn = document.getElementById('playPauseBtn');
   if (!isPaused) {
-    isPaused = true;
-    pausedAt = Date.now();
+    isPaused = true; pausedAt = Date.now();
     clearTimeout(window._segTimer);
     btn.textContent = '▶';
-    await fetch('https://api.spotify.com/v1/me/player/pause', {
-      method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    await fetch('https://api.spotify.com/v1/me/player/pause', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } });
   } else {
     isPaused = false;
     const pausedDuration = Date.now() - pausedAt;
@@ -779,41 +450,36 @@ async function togglePlayPause() {
     clearTimeout(window._segTimer);
     window._segTimer = setTimeout(() => { if (!isPaused) nextSegment(); }, Math.max(0, remaining));
     btn.textContent = '⏸';
-    await fetch('https://api.spotify.com/v1/me/player/play', {
-      method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    await fetch('https://api.spotify.com/v1/me/player/play', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } });
   }
 }
 
 function stopAndGoBack() {
   clearTimeout(window._segTimer);
   clearInterval(progressInterval);
-  fetch('https://api.spotify.com/v1/me/player/pause', {
-    method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
-  }).catch(() => {});
+  fetch('https://api.spotify.com/v1/me/player/pause', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } }).catch(()=>{});
   showScreen('libraryScreen');
 }
 
-function showAnalyzingOverlay(show) {
-  const existing = document.getElementById('analyzingOverlay');
-  if (!show) { existing?.remove(); return; }
-  if (existing) return;
-  const el = document.createElement('div');
-  el.id = 'analyzingOverlay';
-  el.className = 'analyzing-overlay';
-  el.innerHTML = `
-    <div class="loader" style="width:32px;height:32px;border-width:3px;margin-bottom:16px"></div>
-    <h2>🎧 Building Your Mashup</h2>
-    <p>Claude is crafting your high-energy running sequence...</p>
-  `;
-  document.body.appendChild(el);
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function showAnalyzingOverlay(show) {
+  const ex = document.getElementById('analyzingOverlay');
+  if (!show) { ex?.remove(); return; }
+  if (ex) return;
+  const el = document.createElement('div');
+  el.id = 'analyzingOverlay'; el.className = 'analyzing-overlay';
+  el.innerHTML = `<div class="loader" style="width:32px;height:32px;border-width:3px;margin-bottom:16px"></div><h2>🎧 Loading Library</h2><p>Connecting songs to Spotify...</p>`;
+  document.body.appendChild(el);
 }
 
 window.addEventListener('load', init);
