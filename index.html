@@ -367,6 +367,7 @@ const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
 // const REDIRECT_URI = 'https://yourname.github.io/running-mashup/';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+const CLAUDE_PROXY = 'https://mashup.smitdshah2001.workers.dev';
 
 let accessToken = null;
 let songs = [];
@@ -583,7 +584,7 @@ Rules:
 - Be accurate to the actual song structure
 - Return ONLY the JSON array, no other text, no markdown backticks`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(CLAUDE_PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -657,7 +658,7 @@ Respond ONLY with a JSON array. Each item:
 
 Return ONLY the JSON array, no markdown, no preamble.`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(CLAUDE_PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
