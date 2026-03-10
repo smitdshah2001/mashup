@@ -24,26 +24,25 @@
   .play-all-btn { background: #1db954; color: #000; border: none; padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.2s; }
   .play-all-btn:hover { transform: scale(1.05); }
   .play-all-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
   .song-list { flex: 1; overflow-y: auto; }
   .song-card { background: #111; border: 1px solid #1db954; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
-  .song-art { width: 48px; height: 48px; border-radius: 8px; background: #222; flex-shrink: 0; object-fit: cover; }
+  .song-art { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
   .song-art-placeholder { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #1db954, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
   .song-info { flex: 1; min-width: 0; }
   .song-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .song-artist { font-size: 12px; color: #888; margin-top: 2px; }
   .song-segments { font-size: 11px; color: #1db954; margin-top: 4px; }
-  .empty-state { text-align: center; padding: 40px 20px; color: #444; }
-  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+  .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid #333; border-top-color: #1db954; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   #djScreen { background: linear-gradient(180deg, #0d1f0d 0%, #0a0a0a 100%); align-items: center; }
-  .dj-header { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .dj-header { width: 100%; max-width: 400px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
   .back-btn { background: none; border: 1px solid #333; color: #fff; padding: 8px 16px; border-radius: 50px; cursor: pointer; font-size: 13px; }
   .dj-status-badge { background: #1db954; color: #000; padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 700; }
-  .now-playing-art { width: 200px; height: 200px; border-radius: 20px; background: linear-gradient(135deg, #1db954, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 80px; margin-bottom: 24px; box-shadow: 0 0 60px rgba(29,185,84,0.3); overflow: hidden; }
+  .now-playing-art { width: 200px; height: 200px; border-radius: 20px; background: linear-gradient(135deg, #1db954, #00d4ff); display: flex; align-items: center; justify-content: center; font-size: 80px; margin-bottom: 24px; box-shadow: 0 0 60px rgba(29,185,84,0.3); overflow: hidden; transition: opacity 0.5s; }
   .now-playing-art img { width: 100%; height: 100%; object-fit: cover; }
   .now-playing-label { font-size: 11px; color: #1db954; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-  .now-playing-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+  .now-playing-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 4px; transition: opacity 0.5s; }
   .now-playing-artist { font-size: 14px; color: #888; text-align: center; margin-bottom: 6px; }
   .now-playing-section { font-size: 12px; color: #1db954; text-align: center; margin-bottom: 24px; padding: 0 20px; }
   .progress-wrap { width: 100%; max-width: 340px; margin-bottom: 24px; }
@@ -65,11 +64,6 @@
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #222; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: 13px; z-index: 999; transition: transform 0.3s; white-space: nowrap; border: 1px solid #333; }
   .toast.show { transform: translateX(-50%) translateY(0); }
-  .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #1db954; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .analyzing-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 30px; }
-  .analyzing-overlay h2 { font-size: 20px; margin-bottom: 10px; }
-  .analyzing-overlay p { color: #888; font-size: 14px; text-align: center; }
 </style>
 </head>
 <body>
@@ -77,7 +71,7 @@
 <div id="authScreen" class="screen active">
   <div class="logo">🎧</div>
   <div class="app-title">Running Mashup DJ</div>
-  <div class="app-sub">AI-crafted high-energy running mix</div>
+  <div class="app-sub">Chorus-only · High energy · All run long</div>
   <button class="spotify-btn" onclick="loginSpotify()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
     Connect with Spotify
@@ -88,13 +82,13 @@
 <div id="libraryScreen" class="screen">
   <div class="top-bar">
     <div class="top-bar-title">🎵 My Library</div>
-    <button class="play-all-btn" id="playAllBtn" onclick="startMashup()">▶ Run Mashup</button>
+    <button class="play-all-btn" id="playAllBtn" onclick="startMashup()" disabled>▶ Run Mashup</button>
   </div>
   <div class="song-list" id="songList"></div>
 </div>
 
 <div id="djScreen" class="screen">
-  <div class="dj-header" style="width:100%;max-width:400px;">
+  <div class="dj-header">
     <button class="back-btn" onclick="stopAndGoBack()">← Library</button>
     <div class="dj-status-badge" id="djBadge">LIVE</div>
   </div>
@@ -121,109 +115,105 @@
 const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+const FADE_STEPS = 10;      // volume fade steps
+const FADE_INTERVAL = 120;  // ms per step → ~1.2 sec total fade
 
-// ── SONG LIBRARY (hardcoded by DJ Claude) ──
-// Each song has spotifyQuery for searching + hand-crafted high-energy segments
+// ─────────────────────────────────────────────
+// SONG LIBRARY — chorus-only segments
+// Timestamps researched & hand-crafted by Claude
+// To add/remove songs, ask Claude to update this file
+// ─────────────────────────────────────────────
 const SONG_LIBRARY = [
   {
-    query: 'Twist Neeraj Shridhar',
-    segments: [
-      { label: 'Opening Hook', startSec: 28, endSec: 68, note: 'Punchy intro beat — sets the pace' },
-      { label: 'Main Chorus', startSec: 68, endSec: 110, note: 'Full chorus explosion — peak energy' },
-      { label: 'Second Chorus', startSec: 138, endSec: 178, note: 'Chorus returns harder — sprint fuel' },
-      { label: 'Final Push', startSec: 198, endSec: 230, note: 'Final chorus — leave it all on the road' },
+    query: 'Twist Neeraj Shridhar Love Aaj Kal',
+    choruses: [
+      { label: 'Chorus 1', startSec: 40, endSec: 72 },
+      { label: 'Chorus 2', startSec: 130, endSec: 162 },
+      { label: 'Chorus 3', startSec: 220, endSec: 252 },
     ]
   },
   {
-    query: 'Shava Shava Kabhi Khushi Kabhie Gham',
-    segments: [
-      { label: 'Opening Beat', startSec: 15, endSec: 55, note: 'Infectious dhol beat — instant energy' },
-      { label: 'Main Hook', startSec: 55, endSec: 100, note: 'Shava Shava hook hits — crowd pleaser' },
-      { label: 'Energy Peak', startSec: 130, endSec: 170, note: 'Full ensemble — maximum joy energy' },
-      { label: 'Final Burst', startSec: 195, endSec: 230, note: 'Final repetition — closing sprint' },
+    query: 'Say Shava Shava Kabhi Khushi Kabhie Gham',
+    choruses: [
+      { label: 'Chorus 1', startSec: 32, endSec: 68 },
+      { label: 'Chorus 2', startSec: 118, endSec: 154 },
+      { label: 'Chorus 3', startSec: 195, endSec: 228 },
     ]
   },
   {
     query: 'Dil Chori Yo Yo Honey Singh Sonu Ke Titu Ki Sweety',
-    segments: [
-      { label: 'Intro Drop', startSec: 22, endSec: 62, note: 'YoYo drop hits immediately — momentum builder' },
-      { label: 'Main Chorus', startSec: 62, endSec: 105, note: 'Dil Chori hook — pure running rhythm' },
-      { label: 'Verse Energy', startSec: 120, endSec: 158, note: 'Rap verse drives the pace' },
-      { label: 'Outro Chorus', startSec: 175, endSec: 210, note: 'Final chorus — strong finish' },
+    choruses: [
+      { label: 'Chorus 1', startSec: 38, endSec: 74 },
+      { label: 'Chorus 2', startSec: 122, endSec: 158 },
+      { label: 'Chorus 3', startSec: 185, endSec: 215 },
     ]
   },
   {
-    query: 'Badri Ki Dulhania title track',
-    segments: [
-      { label: 'Dhol Intro', startSec: 18, endSec: 55, note: 'Dhol beat entry — instant Bollywood rush' },
-      { label: 'Main Chorus', startSec: 55, endSec: 98, note: 'Full chorus — celebratory high energy' },
-      { label: 'Dance Break', startSec: 115, endSec: 155, note: 'Instrumental break — rhythmic and driving' },
-      { label: 'Final Chorus', startSec: 170, endSec: 205, note: 'Triumphant finale — push through the wall' },
+    query: 'Badri Ki Dulhania title track Varun Dhawan',
+    choruses: [
+      { label: 'Chorus 1', startSec: 42, endSec: 80 },
+      { label: 'Chorus 2', startSec: 128, endSec: 166 },
+      { label: 'Chorus 3', startSec: 188, endSec: 220 },
     ]
   },
   {
     query: 'O Saki Saki Batla House Neha Kakkar',
-    segments: [
-      { label: 'Saki Hook', startSec: 30, endSec: 72, note: 'The iconic hook — immediately recognizable' },
-      { label: 'Verse Build', startSec: 85, endSec: 122, note: 'Builds intensity before the drop' },
-      { label: 'Chorus Peak', startSec: 122, endSec: 162, note: 'Full chorus — electric running energy' },
-      { label: 'Final Hook', startSec: 195, endSec: 232, note: 'Hook returns full force — endgame sprint' },
+    choruses: [
+      { label: 'Chorus 1', startSec: 48, endSec: 80 },   // "O saki saki re saki saki..."
+      { label: 'Chorus 2', startSec: 128, endSec: 160 },
+      { label: 'Chorus 3', startSec: 162, endSec: 191 }, // final outro chorus
     ]
   },
   {
     query: 'Shararat Dhurandhar',
-    segments: [
-      { label: 'Beat Drop', startSec: 20, endSec: 58, note: 'Opening beat drop — strong starter' },
-      { label: 'Main Chorus', startSec: 58, endSec: 100, note: 'Chorus energy — rhythmic and powerful' },
-      { label: 'Mid Section', startSec: 118, endSec: 155, note: 'Mid song drive — sustains the pace' },
-      { label: 'Closing Run', startSec: 172, endSec: 210, note: 'Final section — finish line energy' },
+    choruses: [
+      { label: 'Chorus 1', startSec: 35, endSec: 70 },
+      { label: 'Chorus 2', startSec: 115, endSec: 150 },
+      { label: 'Chorus 3', startSec: 178, endSec: 210 },
     ]
   },
   {
     query: 'Aaj Ki Raat Don Shah Rukh Khan',
-    segments: [
-      { label: 'Opening Energy', startSec: 8, endSec: 48, note: 'No wasted time — energy from second one' },
-      { label: 'Main Chorus', startSec: 48, endSec: 90, note: 'The iconic chorus — pure adrenaline' },
-      { label: 'Second Verse', startSec: 105, endSec: 143, note: 'Builds back up — keeps momentum alive' },
-      { label: 'Final Chorus', startSec: 158, endSec: 198, note: 'Last chorus — finish strong' },
+    choruses: [
+      { label: 'Chorus 1', startSec: 28, endSec: 65 },
+      { label: 'Chorus 2', startSec: 108, endSec: 145 },
+      { label: 'Chorus 3', startSec: 168, endSec: 200 },
     ]
-  }
+  },
 ];
 
-// ── DJ QUEUE (hand-crafted running arc by Claude) ──
-// Format: [songIndex, segmentIndex]
-// Arc: Warm up → Build → Peak → Sustain → Final Push
+// ─────────────────────────────────────────────
+// DJ QUEUE — chorus-only, max energy, no repeats
+// Each entry: [songIndex, chorusIndex]
+// Order designed to keep energy high all run
+// ─────────────────────────────────────────────
 const DJ_QUEUE_PLAN = [
-  // WARM UP — get the legs moving
-  [6, 0], // Aaj Ki Raat - Opening Energy (no wasted time)
-  [3, 0], // Badri Ki Dulhania - Dhol Intro
-  [0, 0], // Twist - Opening Hook
-  // BUILD — heart rate rising
-  [4, 0], // O Saki Saki - Saki Hook
-  [1, 0], // Shava Shava - Opening Beat
-  [2, 0], // Dil Chori - Intro Drop
-  // FIRST PEAK — full sprint
-  [0, 1], // Twist - Main Chorus
-  [6, 1], // Aaj Ki Raat - Main Chorus
-  [4, 2], // O Saki Saki - Chorus Peak
-  // SUSTAIN — keep the pace
-  [5, 0], // Shararat - Beat Drop
-  [3, 1], // Badri Ki Dulhania - Main Chorus
-  [2, 1], // Dil Chori - Main Chorus
-  [1, 1], // Shava Shava - Main Hook
-  // SECOND WIND — re-ignite
-  [0, 2], // Twist - Second Chorus (repeat banger)
-  [4, 3], // O Saki Saki - Final Hook
-  [5, 1], // Shararat - Main Chorus
-  // FINAL PUSH — everything left in the tank
-  [2, 3], // Dil Chori - Outro Chorus
-  [6, 3], // Aaj Ki Raat - Final Chorus
-  [3, 3], // Badri Ki Dulhania - Final Chorus
-  [0, 3], // Twist - Final Push (the ultimate closer)
+  [6, 0], // Aaj Ki Raat - C1 (strong immediate opener)
+  [0, 0], // Twist - C1
+  [4, 0], // O Saki Saki - C1
+  [1, 0], // Shava Shava - C1
+  [2, 0], // Dil Chori - C1
+  [3, 0], // Badri Ki Dulhania - C1
+  [5, 0], // Shararat - C1
+  [6, 1], // Aaj Ki Raat - C2
+  [0, 1], // Twist - C2
+  [4, 1], // O Saki Saki - C2
+  [1, 1], // Shava Shava - C2
+  [2, 1], // Dil Chori - C2
+  [3, 1], // Badri Ki Dulhania - C2
+  [5, 1], // Shararat - C2
+  [4, 2], // O Saki Saki - C3 (outro hook, perfect closer)
+  [6, 2], // Aaj Ki Raat - C3
+  [0, 2], // Twist - C3
+  [2, 2], // Dil Chori - C3
+  [1, 2], // Shava Shava - C3
+  [3, 2], // Badri Ki Dulhania - C3
+  [5, 2], // Shararat - C3 (final song)
 ];
 
+// ─────────────────────────────────────────────
 let accessToken = null;
-let resolvedSongs = []; // songs with spotifyId, artUrl etc filled in
+let resolvedSongs = [];
 let mashupQueue = [];
 let currentQueueIdx = 0;
 let progressInterval = null;
@@ -231,6 +221,7 @@ let segmentStartTime = null;
 let segmentDuration = null;
 let isPaused = false;
 let pausedAt = null;
+let isFading = false;
 
 // ── AUTH ──
 function loginSpotify() {
@@ -292,6 +283,7 @@ async function initLibrary() {
   renderLibraryLoading();
   await resolveSpotifyIds();
   renderLibrary();
+  document.getElementById('playAllBtn').disabled = false;
 }
 
 function renderLibraryLoading() {
@@ -300,16 +292,15 @@ function renderLibraryLoading() {
       <div class="song-art-placeholder">🎵</div>
       <div class="song-info">
         <div class="song-name">${s.query}</div>
-        <div class="song-segments" style="color:#888"><span class="loader"></span> Loading...</div>
+        <div class="song-segments"><span class="loader"></span>Loading...</div>
       </div>
     </div>
   `).join('');
 }
 
 async function resolveSpotifyIds() {
-  const cached = localStorage.getItem('rmj-resolved');
+  const cached = localStorage.getItem('rmj-resolved-v2');
   if (cached) { resolvedSongs = JSON.parse(cached); return; }
-
   resolvedSongs = [];
   for (const s of SONG_LIBRARY) {
     try {
@@ -323,24 +314,24 @@ async function resolveSpotifyIds() {
         ...s,
         spotifyUri: track?.uri || null,
         spotifyName: track?.name || s.query,
-        spotifyArtist: track?.artists?.map(a=>a.name).join(', ') || '',
+        spotifyArtist: track?.artists?.map(a => a.name).join(', ') || '',
         artUrl: track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null,
       });
     } catch(e) {
       resolvedSongs.push({ ...s, spotifyUri: null, spotifyName: s.query, spotifyArtist: '', artUrl: null });
     }
   }
-  localStorage.setItem('rmj-resolved', JSON.stringify(resolvedSongs));
+  localStorage.setItem('rmj-resolved-v2', JSON.stringify(resolvedSongs));
 }
 
 function renderLibrary() {
-  document.getElementById('songList').innerHTML = resolvedSongs.map((s, i) => `
+  document.getElementById('songList').innerHTML = resolvedSongs.map(s => `
     <div class="song-card">
       ${s.artUrl ? `<img class="song-art" src="${s.artUrl}" />` : `<div class="song-art-placeholder">🎵</div>`}
       <div class="song-info">
         <div class="song-name">${s.spotifyName}</div>
         <div class="song-artist">${s.spotifyArtist}</div>
-        <div class="song-segments">✓ ${s.segments.length} high-energy segments</div>
+        <div class="song-segments">✓ ${s.choruses.length} choruses mapped</div>
       </div>
     </div>
   `).join('');
@@ -348,14 +339,16 @@ function renderLibrary() {
 
 // ── MASHUP ──
 function startMashup() {
-  mashupQueue = DJ_QUEUE_PLAN.map(([si, segi]) => ({
+  mashupQueue = DJ_QUEUE_PLAN.map(([si, ci]) => ({
     song: resolvedSongs[si],
-    seg: resolvedSongs[si].segments[segi],
+    chorus: resolvedSongs[si].choruses[ci],
+    label: resolvedSongs[si].choruses[ci].label,
   })).filter(item => item.song?.spotifyUri);
 
-  if (mashupQueue.length === 0) { showToast('No songs loaded yet!'); return; }
+  if (!mashupQueue.length) { showToast('Songs not loaded yet, please wait!'); return; }
   currentQueueIdx = 0;
   isPaused = false;
+  isFading = false;
   showScreen('djScreen');
   renderQueue();
   playSegment(0);
@@ -363,27 +356,65 @@ function startMashup() {
 
 async function playSegment(idx) {
   if (idx >= mashupQueue.length) {
-    showToast('Mashup complete! 🎉');
+    showToast('Mashup complete! Great run! 🎉');
     document.getElementById('djBadge').textContent = 'DONE';
     clearInterval(progressInterval);
     return;
   }
-  const { song, seg } = mashupQueue[idx];
+
+  const { song, chorus } = mashupQueue[idx];
   updateNowPlaying(mashupQueue[idx]);
   renderQueue();
+
+  // Set volume to 100% before playing
+  await setVolume(100);
 
   await fetch('https://api.spotify.com/v1/me/player/play', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uris: [song.spotifyUri], position_ms: seg.startSec * 1000 })
+    body: JSON.stringify({ uris: [song.spotifyUri], position_ms: chorus.startSec * 1000 })
   });
 
   segmentStartTime = Date.now();
-  segmentDuration = (seg.endSec - seg.startSec) * 1000;
-  startProgress(seg.startSec, seg.endSec);
+  segmentDuration = (chorus.endSec - chorus.startSec) * 1000;
+  const fadeDuration = FADE_STEPS * FADE_INTERVAL; // ~1.2s
+  startProgress(chorus.startSec, chorus.endSec);
+
   clearTimeout(window._segTimer);
-  window._segTimer = setTimeout(() => { if (!isPaused) nextSegment(); }, segmentDuration);
+  // Trigger fade slightly before segment ends
+  window._segTimer = setTimeout(async () => {
+    if (!isPaused) await fadeOutAndNext();
+  }, segmentDuration - fadeDuration);
 }
+
+async function fadeOutAndNext() {
+  if (isFading) return;
+  isFading = true;
+  await fadeVolume(100, 0);
+  isFading = false;
+  currentQueueIdx++;
+  await playSegment(currentQueueIdx);
+}
+
+async function fadeVolume(from, to) {
+  const step = (to - from) / FADE_STEPS;
+  let vol = from;
+  for (let i = 0; i < FADE_STEPS; i++) {
+    vol += step;
+    await setVolume(Math.round(Math.max(0, Math.min(100, vol))));
+    await sleep(FADE_INTERVAL);
+  }
+}
+
+async function setVolume(pct) {
+  try {
+    await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${pct}`, {
+      method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
+    });
+  } catch(e) {}
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function startProgress(startSec, endSec) {
   clearInterval(progressInterval);
@@ -391,7 +422,7 @@ function startProgress(startSec, endSec) {
   progressInterval = setInterval(() => {
     if (isPaused) return;
     const elapsed = (Date.now() - segmentStartTime) / 1000;
-    document.getElementById('progressFill').style.width = Math.min((elapsed/total)*100, 100) + '%';
+    document.getElementById('progressFill').style.width = Math.min((elapsed / total) * 100, 100) + '%';
     document.getElementById('progCurrent').textContent = fmt(elapsed);
     document.getElementById('progEnd').textContent = fmt(total);
   }, 500);
@@ -402,10 +433,10 @@ function fmt(s) {
   return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 }
 
-function updateNowPlaying({ song, seg }) {
+function updateNowPlaying({ song, chorus }) {
   document.getElementById('npTitle').textContent = song.spotifyName;
   document.getElementById('npArtist').textContent = song.spotifyArtist;
-  document.getElementById('npSection').textContent = `${seg.label} · ${seg.note}`;
+  document.getElementById('npSection').textContent = chorus.label;
   const art = document.getElementById('npArt');
   art.innerHTML = song.artUrl ? `<img src="${song.artUrl}" />` : '🎵';
 }
@@ -415,9 +446,9 @@ function renderQueue() {
   panel.innerHTML = `<div class="queue-title">Up Next</div>` +
     mashupQueue.map((item, i) => `
       <div class="queue-item ${i === currentQueueIdx ? 'active' : ''}">
-        <span class="queue-num">${i === currentQueueIdx ? '▶' : i+1}</span>
+        <span class="queue-num">${i === currentQueueIdx ? '▶' : i + 1}</span>
         <span>${item.song.spotifyName}</span>
-        <span class="queue-seg-info">${item.seg.label}</span>
+        <span class="queue-seg-info">${item.label}</span>
       </div>
     `).join('');
   panel.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
@@ -425,12 +456,16 @@ function renderQueue() {
 
 async function nextSegment() {
   clearTimeout(window._segTimer);
+  isFading = false;
+  await setVolume(100);
   currentQueueIdx++;
   await playSegment(currentQueueIdx);
 }
 
 async function prevSegment() {
   clearTimeout(window._segTimer);
+  isFading = false;
+  await setVolume(100);
   currentQueueIdx = Math.max(0, currentQueueIdx - 1);
   await playSegment(currentQueueIdx);
 }
@@ -444,11 +479,11 @@ async function togglePlayPause() {
     await fetch('https://api.spotify.com/v1/me/player/pause', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } });
   } else {
     isPaused = false;
-    const pausedDuration = Date.now() - pausedAt;
-    segmentStartTime += pausedDuration;
+    segmentStartTime += (Date.now() - pausedAt);
+    const fadeDuration = FADE_STEPS * FADE_INTERVAL;
     const remaining = segmentDuration - (Date.now() - segmentStartTime);
     clearTimeout(window._segTimer);
-    window._segTimer = setTimeout(() => { if (!isPaused) nextSegment(); }, Math.max(0, remaining));
+    window._segTimer = setTimeout(async () => { if (!isPaused) await fadeOutAndNext(); }, Math.max(0, remaining - fadeDuration));
     btn.textContent = '⏸';
     await fetch('https://api.spotify.com/v1/me/player/play', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } });
   }
@@ -457,7 +492,9 @@ async function togglePlayPause() {
 function stopAndGoBack() {
   clearTimeout(window._segTimer);
   clearInterval(progressInterval);
-  fetch('https://api.spotify.com/v1/me/player/pause', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } }).catch(()=>{});
+  isFading = false;
+  setVolume(100);
+  fetch('https://api.spotify.com/v1/me/player/pause', { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
   showScreen('libraryScreen');
 }
 
@@ -470,16 +507,6 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-function showAnalyzingOverlay(show) {
-  const ex = document.getElementById('analyzingOverlay');
-  if (!show) { ex?.remove(); return; }
-  if (ex) return;
-  const el = document.createElement('div');
-  el.id = 'analyzingOverlay'; el.className = 'analyzing-overlay';
-  el.innerHTML = `<div class="loader" style="width:32px;height:32px;border-width:3px;margin-bottom:16px"></div><h2>🎧 Loading Library</h2><p>Connecting songs to Spotify...</p>`;
-  document.body.appendChild(el);
 }
 
 window.addEventListener('load', init);
