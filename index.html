@@ -594,7 +594,9 @@ Rules:
     })
   });
   const data = await res.json();
-  const text = data.content?.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
+  if (data.error) throw new Error(data.error);
+  if (!data.content) throw new Error('No response from Claude: ' + JSON.stringify(data));
+  const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
   return JSON.parse(text);
 }
 
