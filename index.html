@@ -112,9 +112,10 @@ const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 
-// Minimal fade: 4 steps × 60ms = ~240ms total
-const FADE_STEPS = 4;
-const FADE_INTERVAL = 30;
+// Fade disabled — sync-based transitions instead
+const FADE_STEPS = 1;
+const FADE_INTERVAL = 1;
+const POLL_INTERVAL = 800; // ms between Spotify position polls
 
 // ─────────────────────────────────────────────────────
 // SONG LIBRARY
@@ -542,22 +543,65 @@ async function playSegment(idx) {
   if (idx >= mashupQueue.length) {
     showToast('Mashup complete! Great run! 🎉');
     document.getElementById('djBadge').textContent = 'DONE';
-    clearInterval(progressInterval); return;
+    clearInterval(progressInterval);
+    clearInterval(window._pollTimer);
+    return;
   }
   const { song, seg } = mashupQueue[idx];
   updateNowPlaying(mashupQueue[idx]);
   renderQueue();
   await setVolume(100);
+
   await fetch('https://api.spotify.com/v1/me/player/play', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ uris: [song.uri], position_ms: seg.s * 1000 })
   });
+
+  // Wait for Spotify to actually start playing before starting timer
+  await waitForPlayback(seg.s);
+
   segmentStartTime = Date.now();
   segmentDuration = (seg.e - seg.s) * 1000;
   startProgress(seg.s, seg.e);
-  clearTimeout(window._segTimer);
-  window._segTimer = setTimeout(() => { if (!isPaused) fadeOutAndNext(); }, segmentDuration - (FADE_STEPS * FADE_INTERVAL));
+  startPolling(seg.e);
+}
+
+// Poll Spotify until it confirms playback has started near our target
+async function waitForPlayback(targetSec) {
+  for (let i = 0; i < 10; i++) {
+    await sleep(300);
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me/player', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.status === 204) continue;
+      const data = await res.json();
+      const pos = (data.progress_ms || 0) / 1000;
+      if (data.is_playing && pos >= targetSec - 2) return; // confirmed started
+    } catch(e) {}
+  }
+}
+
+// Poll Spotify position and trigger next segment when endSec is reached
+function startPolling(endSec) {
+  clearInterval(window._pollTimer);
+  window._pollTimer = setInterval(async () => {
+    if (isPaused) return;
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me/player', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.status === 204) return;
+      const data = await res.json();
+      const pos = (data.progress_ms || 0) / 1000;
+      if (pos >= endSec - 0.5) {
+        clearInterval(window._pollTimer);
+        currentQueueIdx++;
+        await playSegment(currentQueueIdx);
+      }
+    } catch(e) {}
+  }, POLL_INTERVAL);
 }
 
 async function fadeOutAndNext() {
@@ -626,13 +670,13 @@ function renderQueue() {
 }
 
 async function nextSegment() {
-  clearTimeout(window._segTimer); isFading = false;
+  clearInterval(window._pollTimer); isFading = false;
   await setVolume(100); currentQueueIdx++;
   await playSegment(currentQueueIdx);
 }
 
 async function prevSegment() {
-  clearTimeout(window._segTimer); isFading = false;
+  clearInterval(window._pollTimer); isFading = false;
   await setVolume(100); currentQueueIdx = Math.max(0, currentQueueIdx - 1);
   await playSegment(currentQueueIdx);
 }
@@ -640,16 +684,15 @@ async function prevSegment() {
 async function togglePlayPause() {
   const btn = document.getElementById('playPauseBtn');
   if (!isPaused) {
-    isPaused = true; pausedAt = Date.now(); clearTimeout(window._segTimer);
+    isPaused = true; pausedAt = Date.now();
+    clearInterval(window._pollTimer);
     btn.textContent = '▶';
     await fetch('https://api.spotify.com/v1/me/player/pause', { method:'PUT', headers:{ Authorization:`Bearer ${accessToken}` } });
   } else {
     isPaused = false; segmentStartTime += (Date.now() - pausedAt);
-    const remaining = segmentDuration - (Date.now() - segmentStartTime);
-    clearTimeout(window._segTimer);
-    window._segTimer = setTimeout(() => { if(!isPaused) fadeOutAndNext(); }, Math.max(0, remaining - FADE_STEPS*FADE_INTERVAL));
     btn.textContent = '⏸';
     await fetch('https://api.spotify.com/v1/me/player/play', { method:'PUT', headers:{ Authorization:`Bearer ${accessToken}` } });
+    startPolling(mashupQueue[currentQueueIdx].seg.e);
   }
 }
 
@@ -675,5 +718,3 @@ window.addEventListener('load', init);
 </script>
 </body>
 </html>
-
-
