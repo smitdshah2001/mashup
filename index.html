@@ -46,11 +46,12 @@
   .progress-bar-bg { width: 100%; height: 4px; background: #222; border-radius: 4px; overflow: hidden; }
   .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #1db954, #00d4ff); border-radius: 4px; width: 0%; transition: width 1s linear; }
   .progress-times { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #555; }
-  .dj-controls { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+  .dj-controls { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
   .ctrl-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .ctrl-btn:hover { background: #222; border-color: #555; }
   .ctrl-btn.primary { background: #1db954; border-color: #1db954; color: #000; width: 62px; height: 62px; font-size: 22px; }
   .ctrl-btn.primary:hover { background: #1ed760; }
+  .lock-screen-btn { background: #1db954; color: #000; border: none; padding: 12px 28px; border-radius: 50px; font-weight: 700; font-size: 13px; cursor: pointer; margin-bottom: 16px; }
   .queue-panel { width: 100%; max-width: 400px; background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 12px; max-height: 180px; overflow-y: auto; }
   .queue-title { font-size: 10px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
   .queue-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
@@ -58,27 +59,11 @@
   .queue-item.active { color: #1db954; font-weight: 600; }
   .queue-num { color: #444; font-size: 10px; width: 18px; text-align: center; flex-shrink: 0; }
   .queue-seg-info { font-size: 10px; color: #555; margin-left: auto; flex-shrink: 0; }
-  .touch-lock {
-    position: fixed; inset: 0; z-index: 50;
-    background: transparent;
-    display: none;
-  }
+  .touch-lock { position: fixed; inset: 0; z-index: 50; background: transparent; display: none; }
   .touch-lock.active { display: block; }
-  .touch-lock-bar {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 80px;
-    display: flex; align-items: center; justify-content: center; gap: 20px;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(10px);
-  }
-  .lock-btn {
-    background: #1a1a1a; border: 1px solid #333; color: #fff;
-    padding: 10px 20px; border-radius: 50px; font-size: 13px; cursor: pointer;
-  }
-  .lock-indicator {
-    color: #555; font-size: 11px; text-align: center; margin-bottom: 60px;
-    letter-spacing: 1px;
-  } left: 50%; transform: translateX(-50%) translateY(80px); background: #222; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: 13px; z-index: 999; transition: transform 0.3s; white-space: nowrap; border: 1px solid #333; }
+  .touch-lock-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 90px; display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
+  .lock-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 10px 18px; border-radius: 50px; font-size: 13px; cursor: pointer; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #222; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: 13px; z-index: 999; transition: transform 0.3s; white-space: nowrap; border: 1px solid #333; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
@@ -88,7 +73,7 @@
   <div class="logo">🎧</div>
   <div class="app-title">Running Mashup DJ</div>
   <div class="app-sub">Chorus-only · High energy · All run long</div>
-  <button class="spotify-btn" onclick="loginSpotify()">
+  <button class="spotify-btn" id="connectBtn">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
     Connect with Spotify
   </button>
@@ -98,14 +83,14 @@
 <div id="libraryScreen" class="screen">
   <div class="top-bar">
     <div class="top-bar-title">🎵 My Library</div>
-    <button class="play-all-btn" id="playAllBtn" onclick="startMashup()" disabled>▶ Run Mashup</button>
+    <button class="play-all-btn" id="playAllBtn" disabled>▶ Run Mashup</button>
   </div>
   <div class="song-list" id="songList"></div>
 </div>
 
 <div id="djScreen" class="screen">
   <div class="dj-header">
-    <button class="back-btn" onclick="stopAndGoBack()">← Library</button>
+    <button class="back-btn" id="backBtn">← Library</button>
     <div class="dj-status-badge" id="djBadge">LIVE</div>
   </div>
   <div class="now-playing-art" id="npArt">🎵</div>
@@ -118,19 +103,19 @@
     <div class="progress-times"><span id="progCurrent">0:00</span><span id="progEnd">0:00</span></div>
   </div>
   <div class="dj-controls">
-    <button class="ctrl-btn" onclick="prevSegment()">⏮</button>
-    <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlayPause()">⏸</button>
-    <button class="ctrl-btn" onclick="nextSegment()">⏭</button>
+    <button class="ctrl-btn" id="prevBtn">⏮</button>
+    <button class="ctrl-btn primary" id="playPauseBtn">⏸</button>
+    <button class="ctrl-btn" id="nextBtn">⏭</button>
   </div>
-  <button class="lock-btn" style="margin-bottom:12px;background:#1db954;color:#000;border:none;padding:12px 28px;border-radius:50px;font-weight:700;" onclick="enableTouchLock()">🔒 Lock Screen</button>
+  <button class="lock-screen-btn" id="lockScreenBtn">🔒 Lock Screen</button>
   <div class="queue-panel" id="queuePanel"></div>
 </div>
 
 <div class="touch-lock" id="touchLock">
   <div class="touch-lock-bar">
-    <button class="lock-btn" onclick="togglePlayPause(); updateLockBar()">⏸ Pause</button>
-    <button class="lock-btn" onclick="nextSegment()">⏭ Skip</button>
-    <button class="lock-btn" onclick="disableTouchLock()">🔓 Unlock</button>
+    <button class="lock-btn" id="lockPauseBtn">⏸ Pause</button>
+    <button class="lock-btn" id="lockNextBtn">⏭ Skip</button>
+    <button class="lock-btn" id="lockUnlockBtn">🔓 Unlock</button>
   </div>
 </div>
 
@@ -140,16 +125,10 @@
 const CLIENT_ID = 'c2f7cc8755b044f7bf04f22862115380';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
-
-// Fade disabled — sync-based transitions instead
-const FADE_STEPS = 1;
-const FADE_INTERVAL = 1;
-const POLL_INTERVAL = 800; // ms between Spotify position polls
+const POLL_INTERVAL = 800;
 
 // ─────────────────────────────────────────────────────
 // SONG LIBRARY
-// Each segment is a continuous build→chorus piece
-// Timestamps hand-crafted by Claude
 // ─────────────────────────────────────────────────────
 const SONG_LIBRARY = [
   { // 0
@@ -169,7 +148,7 @@ const SONG_LIBRARY = [
     ]
   },
   { // 2
-    query: 'Main Aayi Hoon UP Bihar Lootne',
+    query: 'Main Aayi Hoon Up Bihar Lootne',
     segs: [
       { l: 'Chorus 1', s: 18, e: 55 },
       { l: 'Chorus 2', s: 80, e: 118 },
@@ -200,10 +179,10 @@ const SONG_LIBRARY = [
   { // 6
     query: 'Tauba Tauba Bad Newz Karan Aujla',
     segs: [
-      { l: 'Hook 1',  s: 0,   e: 28 },
-      { l: 'Hook 2',  s: 52,  e: 82 },
-      { l: 'Hook 3',  s: 118, e: 148 },
-      { l: 'Hook 4',  s: 178, e: 207 },
+      { l: 'Hook 1', s: 0,   e: 28 },
+      { l: 'Hook 2', s: 52,  e: 82 },
+      { l: 'Hook 3', s: 118, e: 148 },
+      { l: 'Hook 4', s: 178, e: 207 },
     ]
   },
   { // 7
@@ -221,7 +200,7 @@ const SONG_LIBRARY = [
     ]
   },
   { // 9
-    query: 'Yaar Na Miley Kick Yo Yo Honey Singh',
+    query: 'Yaar Naa Miley Kick Yo Yo Honey Singh',
     segs: [
       { l: 'Drop→Chorus 1',  s: 15, e: 55 },
       { l: 'Build→Chorus 2', s: 92,  e: 132 },
@@ -266,14 +245,14 @@ const SONG_LIBRARY = [
     ]
   },
   { // 15
-    query: 'Laal Pari Dev D',
+    query: 'Laal Pari Housefull 5 Yo Yo Honey Singh Simar Kaur Alfaaz',
     segs: [
       { l: 'Chorus 1', s: 18, e: 58 },
       { l: 'Chorus 2', s: 88, e: 125 },
     ]
   },
   { // 16
-    query: 'Ud Da Punjab Shahid Kapoor Alia Bhatt',
+    query: 'Ud-daa Punjab Shahid Kapoor Alia Bhatt',
     segs: [
       { l: 'Build→Chorus 1', s: 30, e: 75 },
       { l: 'Build→Chorus 2', s: 122, e: 162 },
@@ -281,7 +260,7 @@ const SONG_LIBRARY = [
     ]
   },
   { // 17
-    query: 'ABCD Yariyan Yo Yo Honey Singh',
+    query: 'ABCD Yaariyan Yo Yo Honey Singh',
     segs: [
       { l: 'Chorus 1', s: 20, e: 60 },
       { l: 'Chorus 2', s: 95, e: 132 },
@@ -322,10 +301,10 @@ const SONG_LIBRARY = [
   { // 22
     query: 'Say Shava Shava Kabhi Khushi Kabhie Gham',
     segs: [
-      { l: 'Chorus 1',       s: 18,  e: 62 },
-      { l: 'Full Ensemble',  s: 95,  e: 145 },
-      { l: 'Mid Peak',       s: 190, e: 235 },
-      { l: 'GRAND FINALE',   s: 318, e: 408 }, // 5:18 → 6:48
+      { l: 'Chorus 1',      s: 18,  e: 62  },
+      { l: 'Full Ensemble', s: 95,  e: 145 },
+      { l: 'Mid Peak',      s: 190, e: 235 },
+      { l: 'GRAND FINALE',  s: 318, e: 408 },
     ]
   },
   { // 23
@@ -374,67 +353,35 @@ const SONG_LIBRARY = [
       { l: 'Final Chorus',   s: 152, e: 188 },
     ]
   },
+  { // 29
+    query: 'Bhool Bhulaiyaa title track Pritam Akshay Kumar 2007',
+    segs: [
+      { l: 'Hook 1',         s: 0,  e: 35  },
+      { l: 'Build→Chorus 1', s: 35, e: 78  },
+      { l: 'Build→Chorus 2', s: 122, e: 162 },
+    ]
+  },
 ];
 
 // ─────────────────────────────────────────────────────
-// DJ QUEUE — creative, surprising, non-systematic order
-// [songIndex, segIndex]
-// Shava Shava GRAND FINALE dropped mid-run as surprise bomb
+// DJ QUEUE
 // ─────────────────────────────────────────────────────
 const DJ_QUEUE_PLAN = [
-  [6,  0],  // Tauba Tauba Hook 1 — no intro, straight fire
-  [24, 0],  // Jhoome Jo Pathaan — drop right in
-  [0,  0],  // Aaj Ki Raat — build rolls straight into chorus
-  [13, 0],  // Char Bottle Vodka — Honey Singh drop
-  [19, 0],  // Dance Pe Chance — classic SRK energy
-  [9,  0],  // Yaar Na Miley — Kick-era bounce
-  [4,  0],  // Badri Ki Dulhania — dhol slam
-  [6,  1],  // Tauba Tauba Hook 2 — back already, surprise
-  [16, 0],  // Ud Da Punjab — raw Punjab energy
-  [21, 0],  // Twist — smooth build into hook
-  [1,  0],  // O Saki Saki — the iconic hook arrives
-  [10, 0],  // Nadiyon Paar — Sachin-Jigar magic
-  [18, 0],  // Sauda Khara Khara — Punjabi drop
-  [22, 1],  // *** SHAVA SHAVA FULL ENSEMBLE *** — surprise mid-run bomb
-  [25, 0],  // Jhoom Barabar Jhoom — change of pace
-  [23, 0],  // Chaleya — Jawan energy
-  [3,  0],  // First Class — silky build
-  [6,  2],  // Tauba Tauba Hook 3 — third appearance, earned
-  [8,  0],  // Sau Tarah Ke — Dishoom
-  [20, 0],  // Laung Da Lashkara — folk Punjabi rush
-  [0,  1],  // Aaj Ki Raat second run — still slaps
-  [17, 0],  // ABCD Yariyan
-  [4,  1],  // Badri Ki Dulhania round 2
-  [28, 0],  // Pyaar Hota Kayi Baar Hai
-  [11, 0],  // Deedar De
-  [7,  0],  // Beedi — raw Vishal Bhardwaj
-  [1,  1],  // O Saki Saki second hook
-  [5,  0],  // Shararat drop
-  [26, 0],  // Do U Know
-  [13, 1],  // Char Bottle Vodka round 2
-  [15, 0],  // Laal Pari
-  [2,  0],  // UP Bihar Lootne — pure chaos energy
-  [10, 1],  // Nadiyon Paar — second chorus
-  [27, 0],  // Tere Pyaar Mein
-  [9,  1],  // Yaar Na Miley — second burst
-  [14, 0],  // Character Dheela
-  [24, 1],  // Jhoome Jo Pathaan round 2
-  [19, 1],  // Dance Pe Chance — second push
-  [12, 0],  // Kiya Kiya — old school Govinda
-  [21, 1],  // Twist second chorus
-  [6,  3],  // Tauba Tauba Hook 4 — final Tauba appearance
-  [18, 1],  // Sauda Khara Khara second
-  [23, 1],  // Chaleya second chorus
-  [16, 1],  // Ud Da Punjab second
-  [0,  2],  // Aaj Ki Raat final chorus
-  [4,  2],  // Badri Ki Dulhania grand finale chorus
-  [1,  2],  // O Saki Saki outro hook
-  [10, 2],  // Nadiyon Paar final chorus
-  [20, 1],  // Laung Da Lashkara round 2
-  [22, 2],  // Shava Shava Mid Peak — teaser before the bomb
-  [22, 3],  // *** SHAVA SHAVA GRAND FINALE *** — 5:18, the closer
+  [6,  0], [24, 0], [0,  0], [13, 0], [19, 0],
+  [9,  0], [4,  0], [6,  1], [16, 0], [21, 0],
+  [1,  0], [10, 0], [18, 0], [22, 1], [25, 0],
+  [29, 0], [23, 0], [3,  0], [6,  2], [8,  0],
+  [20, 0], [0,  1], [17, 0], [4,  1], [28, 0],
+  [11, 0], [7,  0], [1,  1], [5,  0], [26, 0],
+  [13, 1], [15, 0], [2,  0], [10, 1], [27, 0],
+  [9,  1], [14, 0], [24, 1], [29, 1], [19, 1],
+  [12, 0], [21, 1], [6,  3], [18, 1], [23, 1],
+  [16, 1], [0,  2], [4,  2], [1,  2], [10, 2],
+  [20, 1], [29, 2], [22, 2], [22, 3],
 ];
 
+// ─────────────────────────────────────────────────────
+// STATE
 // ─────────────────────────────────────────────────────
 let accessToken = null;
 let resolvedSongs = [];
@@ -445,14 +392,31 @@ let segmentStartTime = null;
 let segmentDuration = null;
 let isPaused = false;
 let pausedAt = null;
-let isFading = false;
 let isPlaying = false;
 let wakeLock = null;
 
+// ─────────────────────────────────────────────────────
+// WAKE LOCK
+// ─────────────────────────────────────────────────────
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+
+function releaseWakeLock() {
+  try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch(e) {}
+}
+
+// ─────────────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────────────
 function loginSpotify() {
   const v = generateCodeVerifier(128);
   sessionStorage.setItem('pkce_verifier', v);
-  generateCodeChallenge(v).then(ch => {
+  generateCodeChallenge(v).then(function(ch) {
     window.location.href = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
       client_id: CLIENT_ID, response_type: 'code',
       redirect_uri: REDIRECT_URI, scope: SCOPES,
@@ -465,212 +429,193 @@ function generateCodeVerifier(len) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   const arr = new Uint8Array(len);
   crypto.getRandomValues(arr);
-  return Array.from(arr, b => chars[b % chars.length]).join('');
+  return Array.from(arr, function(b) { return chars[b % chars.length]; }).join('');
 }
 
-async function generateCodeChallenge(v) {
-  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
-  return btoa(String.fromCharCode(...new Uint8Array(d))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function generateCodeChallenge(v) {
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)).then(function(d) {
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(d)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  });
 }
 
-async function handleCallback(code) {
-  const res = await fetch('https://accounts.spotify.com/api/token', {
+function handleCallback(code) {
+  return fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: {'Content-Type':'application/x-www-form-urlencoded'},
     body: new URLSearchParams({
       client_id: CLIENT_ID, grant_type: 'authorization_code',
-      code, redirect_uri: REDIRECT_URI,
+      code: code, redirect_uri: REDIRECT_URI,
       code_verifier: sessionStorage.getItem('pkce_verifier'),
     })
+  }).then(function(res) { return res.json(); }).then(function(data) {
+    if (data.access_token) {
+      accessToken = data.access_token;
+      localStorage.setItem('spotify_token', accessToken);
+      window.history.replaceState({}, '', window.location.pathname);
+      return initLibrary();
+    } else {
+      showToast('Auth failed — check Redirect URI in Spotify Dashboard');
+    }
   });
-  const data = await res.json();
-  if (data.access_token) {
-    accessToken = data.access_token;
-    localStorage.setItem('spotify_token', accessToken);
-    window.history.replaceState({}, '', window.location.pathname);
-    await initLibrary();
-  } else {
-    showToast('Auth failed — check Redirect URI in Spotify Dashboard');
-  }
 }
 
-async function init() {
+function init() {
   const code = new URLSearchParams(window.location.search).get('code');
-  if (code) { await handleCallback(code); return; }
+  if (code) { handleCallback(code); return; }
   const saved = localStorage.getItem('spotify_token');
-  if (saved) { accessToken = saved; await initLibrary(); }
+  if (saved) { accessToken = saved; initLibrary(); }
   else showScreen('authScreen');
 }
 
-async function initLibrary() {
+// ─────────────────────────────────────────────────────
+// LIBRARY
+// ─────────────────────────────────────────────────────
+function initLibrary() {
   showScreen('libraryScreen');
   renderLibraryLoading();
-  await resolveSpotifyIds();
-  renderLibrary();
-  document.getElementById('playAllBtn').disabled = false;
+  return resolveSpotifyIds().then(function() {
+    renderLibrary();
+    document.getElementById('playAllBtn').disabled = false;
+  });
 }
 
 function renderLibraryLoading() {
-  document.getElementById('songList').innerHTML = SONG_LIBRARY.map(s => `
-    <div class="song-card">
-      <div class="song-art-placeholder">🎵</div>
-      <div class="song-info">
-        <div class="song-name">${s.query}</div>
-        <div class="song-segments"><span class="loader"></span>Loading...</div>
-      </div>
-    </div>`).join('');
+  document.getElementById('songList').innerHTML = SONG_LIBRARY.map(function(s) {
+    return '<div class="song-card"><div class="song-art-placeholder">🎵</div><div class="song-info"><div class="song-name">' + s.query + '</div><div class="song-segments"><span class="loader"></span>Loading...</div></div></div>';
+  }).join('');
 }
 
-async function resolveSpotifyIds() {
+function resolveSpotifyIds() {
   const cached = localStorage.getItem('rmj-v3');
-  if (cached) { resolvedSongs = JSON.parse(cached); return; }
+  if (cached) { resolvedSongs = JSON.parse(cached); return Promise.resolve(); }
   resolvedSongs = [];
-  for (const s of SONG_LIBRARY) {
-    try {
-      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(s.query)}&type=track&limit=1`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+  return SONG_LIBRARY.reduce(function(chain, s) {
+    return chain.then(function() {
+      return fetch('https://api.spotify.com/v1/search?q=' + encodeURIComponent(s.query) + '&type=track&limit=1', {
+        headers: { Authorization: 'Bearer ' + accessToken }
+      }).then(function(res) {
+        if (res.status === 401) { localStorage.removeItem('spotify_token'); showScreen('authScreen'); return; }
+        return res.json();
+      }).then(function(data) {
+        var t = data && data.tracks && data.tracks.items && data.tracks.items[0];
+        resolvedSongs.push(Object.assign({}, s, {
+          uri: t ? t.uri : null,
+          name: t ? t.name : s.query,
+          artist: t ? t.artists.map(function(a){return a.name;}).join(', ') : '',
+          art: t ? (t.album.images[1] ? t.album.images[1].url : (t.album.images[0] ? t.album.images[0].url : null)) : null,
+        }));
+      }).catch(function() {
+        resolvedSongs.push(Object.assign({}, s, { uri: null, name: s.query, artist: '', art: null }));
       });
-      if (res.status === 401) { localStorage.removeItem('spotify_token'); showScreen('authScreen'); return; }
-      const data = await res.json();
-      const t = data.tracks?.items?.[0];
-      resolvedSongs.push({
-        ...s,
-        uri: t?.uri || null,
-        name: t?.name || s.query,
-        artist: t?.artists?.map(a => a.name).join(', ') || '',
-        art: t?.album?.images?.[1]?.url || t?.album?.images?.[0]?.url || null,
-      });
-    } catch(e) {
-      resolvedSongs.push({ ...s, uri: null, name: s.query, artist: '', art: null });
-    }
-  }
-  localStorage.setItem('rmj-v3', JSON.stringify(resolvedSongs));
+    });
+  }, Promise.resolve()).then(function() {
+    localStorage.setItem('rmj-v3', JSON.stringify(resolvedSongs));
+  });
 }
 
 function renderLibrary() {
-  document.getElementById('songList').innerHTML = resolvedSongs.map(s => `
-    <div class="song-card">
-      ${s.art ? `<img class="song-art" src="${s.art}" />` : `<div class="song-art-placeholder">🎵</div>`}
-      <div class="song-info">
-        <div class="song-name">${s.name}</div>
-        <div class="song-artist">${s.artist}</div>
-        <div class="song-segments">✓ ${s.segs.length} segments mapped</div>
-      </div>
-    </div>`).join('');
+  document.getElementById('songList').innerHTML = resolvedSongs.map(function(s) {
+    return '<div class="song-card">' +
+      (s.art ? '<img class="song-art" src="' + s.art + '" />' : '<div class="song-art-placeholder">🎵</div>') +
+      '<div class="song-info"><div class="song-name">' + s.name + '</div><div class="song-artist">' + s.artist + '</div>' +
+      '<div class="song-segments">✓ ' + s.segs.length + ' segments mapped</div></div></div>';
+  }).join('');
 }
 
+// ─────────────────────────────────────────────────────
+// MASHUP
+// ─────────────────────────────────────────────────────
 function startMashup() {
-  mashupQueue = DJ_QUEUE_PLAN.map(([si, gi]) => ({
-    song: resolvedSongs[si], seg: resolvedSongs[si].segs[gi]
-  })).filter(x => x.song?.uri);
+  mashupQueue = DJ_QUEUE_PLAN.map(function(item) {
+    return { song: resolvedSongs[item[0]], seg: resolvedSongs[item[0]].segs[item[1]] };
+  }).filter(function(x) { return x.song && x.song.uri; });
   if (!mashupQueue.length) { showToast('Songs not loaded yet!'); return; }
-  currentQueueIdx = 0; isPaused = false; isFading = false; isPlaying = true;
-  await requestWakeLock();
+  currentQueueIdx = 0; isPaused = false; isPlaying = true;
+  requestWakeLock();
   showScreen('djScreen');
   renderQueue();
   playSegment(0);
 }
 
-async function playSegment(idx) {
+function playSegment(idx) {
   if (idx >= mashupQueue.length) {
     showToast('Mashup complete! Great run! 🎉');
     document.getElementById('djBadge').textContent = 'DONE';
     clearInterval(progressInterval);
     clearInterval(window._pollTimer);
-    return;
+    isPlaying = false; releaseWakeLock();
+    return Promise.resolve();
   }
-  const { song, seg } = mashupQueue[idx];
-  updateNowPlaying(mashupQueue[idx]);
+  var item = mashupQueue[idx];
+  var song = item.song; var seg = item.seg;
+  updateNowPlaying(item);
   renderQueue();
-  await setVolume(100);
-
-  await fetch('https://api.spotify.com/v1/me/player/play', {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uris: [song.uri], position_ms: seg.s * 1000 })
+  return setVolume(100).then(function() {
+    return fetch('https://api.spotify.com/v1/me/player/play', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: [song.uri], position_ms: seg.s * 1000 })
+    });
+  }).then(function() {
+    return waitForPlayback(seg.s);
+  }).then(function() {
+    segmentStartTime = Date.now();
+    segmentDuration = (seg.e - seg.s) * 1000;
+    startProgress(seg.s, seg.e);
+    startPolling(seg.e);
   });
-
-  // Wait for Spotify to actually start playing before starting timer
-  await waitForPlayback(seg.s);
-
-  segmentStartTime = Date.now();
-  segmentDuration = (seg.e - seg.s) * 1000;
-  startProgress(seg.s, seg.e);
-  startPolling(seg.e);
 }
 
-// Poll Spotify until it confirms playback has started near our target
-async function waitForPlayback(targetSec) {
-  for (let i = 0; i < 10; i++) {
-    await sleep(300);
-    try {
-      const res = await fetch('https://api.spotify.com/v1/me/player', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      if (res.status === 204) continue;
-      const data = await res.json();
-      const pos = (data.progress_ms || 0) / 1000;
-      if (data.is_playing && pos >= targetSec - 2) return; // confirmed started
-    } catch(e) {}
-  }
+function waitForPlayback(targetSec) {
+  var attempts = 0;
+  return new Promise(function(resolve) {
+    function check() {
+      if (attempts >= 10) { resolve(); return; }
+      attempts++;
+      setTimeout(function() {
+        fetch('https://api.spotify.com/v1/me/player', {
+          headers: { Authorization: 'Bearer ' + accessToken }
+        }).then(function(res) {
+          if (res.status === 204) { check(); return; }
+          return res.json().then(function(data) {
+            var pos = (data.progress_ms || 0) / 1000;
+            if (data.is_playing && pos >= targetSec - 2) { resolve(); }
+            else { check(); }
+          });
+        }).catch(function() { check(); });
+      }, 300);
+    }
+    check();
+  });
 }
 
-// Poll Spotify position and trigger next segment when endSec is reached
 function startPolling(endSec) {
   clearInterval(window._pollTimer);
-  window._pollTimer = setInterval(async () => {
+  window._pollTimer = setInterval(function() {
     if (isPaused) return;
-    try {
-      const res = await fetch('https://api.spotify.com/v1/me/player', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
+    fetch('https://api.spotify.com/v1/me/player', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    }).then(function(res) {
       if (res.status === 204) return;
-      const data = await res.json();
-      const pos = (data.progress_ms || 0) / 1000;
-      if (pos >= endSec - 0.5) {
-        clearInterval(window._pollTimer);
-        currentQueueIdx++;
-        await playSegment(currentQueueIdx);
-      }
-    } catch(e) {}
+      return res.json().then(function(data) {
+        var pos = (data.progress_ms || 0) / 1000;
+        if (pos >= endSec - 0.5) {
+          clearInterval(window._pollTimer);
+          currentQueueIdx++;
+          playSegment(currentQueueIdx);
+        }
+      });
+    }).catch(function() {});
   }, POLL_INTERVAL);
 }
 
-async function fadeOutAndNext() {
-  if (isFading) return;
-  isFading = true;
-  await fadeVolume(100, 0);
-  isFading = false;
-  currentQueueIdx++;
-  await playSegment(currentQueueIdx);
-}
-
-async function fadeVolume(from, to) {
-  const step = (to - from) / FADE_STEPS;
-  let vol = from;
-  for (let i = 0; i < FADE_STEPS; i++) {
-    vol += step;
-    await setVolume(Math.round(Math.max(0, Math.min(100, vol))));
-    await sleep(FADE_INTERVAL);
-  }
-}
-
-async function setVolume(pct) {
-  try {
-    await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${pct}`, {
-      method: 'PUT', headers: { Authorization: `Bearer ${accessToken}` }
-    });
-  } catch(e) {}
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
 function startProgress(s, e) {
   clearInterval(progressInterval);
-  const total = e - s;
-  progressInterval = setInterval(() => {
+  var total = e - s;
+  progressInterval = setInterval(function() {
     if (isPaused) return;
-    const elapsed = (Date.now() - segmentStartTime) / 1000;
+    var elapsed = (Date.now() - segmentStartTime) / 1000;
     document.getElementById('progressFill').style.width = Math.min((elapsed/total)*100,100) + '%';
     document.getElementById('progCurrent').textContent = fmt(elapsed);
     document.getElementById('progEnd').textContent = fmt(total);
@@ -679,148 +624,125 @@ function startProgress(s, e) {
 
 function fmt(s) {
   s = Math.max(0, Math.floor(s));
-  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
 }
 
-function updateNowPlaying({ song, seg }) {
-  document.getElementById('npTitle').textContent = song.name;
-  document.getElementById('npArtist').textContent = song.artist;
-  document.getElementById('npSection').textContent = seg.l;
-  document.getElementById('npArt').innerHTML = song.art ? `<img src="${song.art}" />` : '🎵';
+function updateNowPlaying(item) {
+  document.getElementById('npTitle').textContent = item.song.name;
+  document.getElementById('npArtist').textContent = item.song.artist;
+  document.getElementById('npSection').textContent = item.seg.l;
+  document.getElementById('npArt').innerHTML = item.song.art ? '<img src="' + item.song.art + '" />' : '🎵';
 }
 
 function renderQueue() {
-  const p = document.getElementById('queuePanel');
-  p.innerHTML = `<div class="queue-title">Up Next</div>` +
-    mashupQueue.map((item, i) => `
-      <div class="queue-item ${i===currentQueueIdx?'active':''}">
-        <span class="queue-num">${i===currentQueueIdx?'▶':i+1}</span>
-        <span>${item.song.name}</span>
-        <span class="queue-seg-info">${item.seg.l}</span>
-      </div>`).join('');
-  p.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
+  var p = document.getElementById('queuePanel');
+  p.innerHTML = '<div class="queue-title">Up Next</div>' +
+    mashupQueue.map(function(item, i) {
+      return '<div class="queue-item ' + (i===currentQueueIdx?'active':'') + '">' +
+        '<span class="queue-num">' + (i===currentQueueIdx?'▶':i+1) + '</span>' +
+        '<span>' + item.song.name + '</span>' +
+        '<span class="queue-seg-info">' + item.seg.l + '</span></div>';
+    }).join('');
+  var active = p.querySelector('.active');
+  if (active) active.scrollIntoView({ block: 'nearest' });
 }
 
-async function nextSegment() {
-  clearInterval(window._pollTimer); isFading = false;
-  await setVolume(100); currentQueueIdx++;
-  await playSegment(currentQueueIdx);
+function nextSegment() {
+  clearInterval(window._pollTimer);
+  setVolume(100);
+  currentQueueIdx++;
+  playSegment(currentQueueIdx);
 }
 
-async function prevSegment() {
-  clearInterval(window._pollTimer); isFading = false;
-  await setVolume(100); currentQueueIdx = Math.max(0, currentQueueIdx - 1);
-  await playSegment(currentQueueIdx);
+function prevSegment() {
+  clearInterval(window._pollTimer);
+  setVolume(100);
+  currentQueueIdx = Math.max(0, currentQueueIdx - 1);
+  playSegment(currentQueueIdx);
 }
 
-async function togglePlayPause() {
-  const btn = document.getElementById('playPauseBtn');
+function togglePlayPause() {
+  var btn = document.getElementById('playPauseBtn');
+  var lockBtn = document.getElementById('lockPauseBtn');
   if (!isPaused) {
     isPaused = true; pausedAt = Date.now();
     clearInterval(window._pollTimer);
-    btn.textContent = '▶';
-    await fetch('https://api.spotify.com/v1/me/player/pause', { method:'PUT', headers:{ Authorization:`Bearer ${accessToken}` } });
+    btn.textContent = '▶'; if (lockBtn) lockBtn.textContent = '▶ Resume';
+    fetch('https://api.spotify.com/v1/me/player/pause', { method:'PUT', headers:{ Authorization:'Bearer ' + accessToken } });
+    releaseWakeLock();
   } else {
     isPaused = false; segmentStartTime += (Date.now() - pausedAt);
-    btn.textContent = '⏸';
-    await fetch('https://api.spotify.com/v1/me/player/play', { method:'PUT', headers:{ Authorization:`Bearer ${accessToken}` } });
+    btn.textContent = '⏸'; if (lockBtn) lockBtn.textContent = '⏸ Pause';
+    fetch('https://api.spotify.com/v1/me/player/play', { method:'PUT', headers:{ Authorization:'Bearer ' + accessToken } });
+    requestWakeLock();
     startPolling(mashupQueue[currentQueueIdx].seg.e);
   }
 }
 
 function stopAndGoBack() {
-  isPlaying = false;
-  releaseWakeLock();
-  clearTimeout(window._segTimer); clearInterval(progressInterval);
-  isFading = false; setVolume(100);
-  fetch('https://api.spotify.com/v1/me/player/pause', { method:'PUT', headers:{ Authorization:`Bearer ${accessToken}` } }).catch(()=>{});
+  clearInterval(window._pollTimer); clearInterval(progressInterval);
+  isPlaying = false; releaseWakeLock();
+  disableTouchLock();
+  fetch('https://api.spotify.com/v1/me/player/pause', { method:'PUT', headers:{ Authorization:'Bearer ' + accessToken } }).catch(function(){});
   showScreen('libraryScreen');
 }
 
+function setVolume(pct) {
+  return fetch('https://api.spotify.com/v1/me/player/volume?volume_percent=' + pct, {
+    method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken }
+  }).catch(function(){});
+}
+
+// ─────────────────────────────────────────────────────
+// TOUCH LOCK
+// ─────────────────────────────────────────────────────
 function enableTouchLock() {
   document.getElementById('touchLock').classList.add('active');
-  showToast('Screen locked — only bottom bar is active');
+  showToast('Screen locked 🔒');
 }
 
 function disableTouchLock() {
   document.getElementById('touchLock').classList.remove('active');
 }
 
-function updateLockBar() {
-  const btn = document.querySelector('#touchLock .lock-btn');
-  if (btn) btn.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
-}
-
+// ─────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
+  setTimeout(function() { t.classList.remove('show'); }, 3500);
 }
 
-async function requestWakeLock() {
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-  } catch(e) {}
-}
+// ─────────────────────────────────────────────────────
+// EVENT LISTENERS — all wired here, no inline onclick
+// ─────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  document.getElementById('connectBtn').addEventListener('click', loginSpotify);
+  document.getElementById('playAllBtn').addEventListener('click', startMashup);
+  document.getElementById('backBtn').addEventListener('click', stopAndGoBack);
+  document.getElementById('prevBtn').addEventListener('click', prevSegment);
+  document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+  document.getElementById('nextBtn').addEventListener('click', nextSegment);
+  document.getElementById('lockScreenBtn').addEventListener('click', enableTouchLock);
+  document.getElementById('lockPauseBtn').addEventListener('click', function() { togglePlayPause(); });
+  document.getElementById('lockNextBtn').addEventListener('click', nextSegment);
+  document.getElementById('lockUnlockBtn').addEventListener('click', disableTouchLock);
 
-function releaseWakeLock() {
-  try { wakeLock?.release(); wakeLock = null; } catch(e) {}
-}
-
-// Re-acquire wake lock if released (e.g. tab switch)
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible' && isPlaying && !isPaused) {
-    await requestWakeLock();
-  }
-});
-
-window.addEventListener('load', init);
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible') return;
-  if (!isPlaying || isPaused || !mashupQueue.length) return;
-
-  try {
-    const res = await fetch('https://api.spotify.com/v1/me/player', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (res.status === 204) return;
-    const data = await res.json();
-    const currentUri = data.item?.uri;
-    const currentPos = (data.progress_ms || 0) / 1000;
-
-    // Find which segment should be playing right now
-    const match = mashupQueue.findIndex((item, i) =>
-      i >= currentQueueIdx &&
-      item.song.uri === currentUri &&
-      currentPos >= item.seg.s - 3 &&
-      currentPos < item.seg.e
-    );
-
-    if (match !== -1 && match !== currentQueueIdx) {
-      // Jump to the correct segment
-      clearInterval(window._pollTimer);
-      currentQueueIdx = match;
-      updateNowPlaying(mashupQueue[currentQueueIdx]);
-      renderQueue();
-      segmentStartTime = Date.now() - ((currentPos - mashupQueue[currentQueueIdx].seg.s) * 1000);
-      segmentDuration = (mashupQueue[currentQueueIdx].seg.e - mashupQueue[currentQueueIdx].seg.s) * 1000;
-      startProgress(mashupQueue[currentQueueIdx].seg.s, mashupQueue[currentQueueIdx].seg.e);
-      startPolling(mashupQueue[currentQueueIdx].seg.e);
-    } else if (match === -1) {
-      // Spotify moved past our segment — force next
-      clearInterval(window._pollTimer);
-      currentQueueIdx++;
-      await playSegment(currentQueueIdx);
+  // Re-acquire wake lock when tab becomes visible again
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && isPlaying && !isPaused) {
+      requestWakeLock();
     }
-  } catch(e) {}
-});
+  });
 
-window.addEventListener('load', init);
+  init();
+});
 </script>
 </body>
 </html>
