@@ -449,23 +449,6 @@ let isFading = false;
 let isPlaying = false;
 let wakeLock = null;
 
-async function requestWakeLock() {
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-  } catch(e) {}
-}
-
-function releaseWakeLock() {
-  try { wakeLock?.release(); wakeLock = null; } catch(e) {}
-}
-
-// Re-acquire wake lock if released (e.g. tab switch)
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible' && isPlaying && !isPaused) {
-    await requestWakeLock();
-  }
-});
-
 function loginSpotify() {
   const v = generateCodeVerifier(128);
   sessionStorage.setItem('pkce_verifier', v);
@@ -779,7 +762,24 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-// Re-sync when screen wakes up
+async function requestWakeLock() {
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch(e) {}
+}
+
+function releaseWakeLock() {
+  try { wakeLock?.release(); wakeLock = null; } catch(e) {}
+}
+
+// Re-acquire wake lock if released (e.g. tab switch)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && isPlaying && !isPaused) {
+    await requestWakeLock();
+  }
+});
+
+window.addEventListener('load', init);
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState !== 'visible') return;
   if (!isPlaying || isPaused || !mashupQueue.length) return;
