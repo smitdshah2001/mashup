@@ -398,12 +398,12 @@ let wakeLock = null;
 // ─────────────────────────────────────────────────────
 // WAKE LOCK
 // ─────────────────────────────────────────────────────
-async function requestWakeLock() {
-  try {
-    if ('wakeLock' in navigator) {
-      wakeLock = await navigator.wakeLock.request('screen');
-    }
-  } catch(e) {}
+function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(function(wl) {
+      wakeLock = wl;
+    }).catch(function() {});
+  }
 }
 
 function releaseWakeLock() {
